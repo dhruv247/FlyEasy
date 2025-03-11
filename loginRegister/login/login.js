@@ -20,6 +20,7 @@ async function login(event) {
             if (user.password === hashedPassword) {
                 localStorage.setItem("loginStatus", true);
                 localStorage.setItem("userId", user.userId);
+                localStorage.setItem("userType", user.userType);
                 alert("Logged in successfully!")
                 window.location.href = "../../homepage/index.html";
             } else {

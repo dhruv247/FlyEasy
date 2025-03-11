@@ -5,7 +5,7 @@ users = [{
     password: "xyz", // hashed
     createdAt: '22-01-2025', // Fixed
     updatedAt: '22-02-2025',
-    userType: "admin" // admin or user (admin can change everything for a user, flights, and bookings)
+    userType: "admin" // [admin, customer] (admin can change everything for a user, flights, and bookings)
 }]
 
 flights = [{

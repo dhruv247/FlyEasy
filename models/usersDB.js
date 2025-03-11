@@ -61,6 +61,23 @@ const getUserByEmail = async (email) => {
 };
 
 /**
+ * Gets a user by userId
+ * @param {*} userId 
+ * @returns 
+ */
+const getUserByUserId = async (userId) => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("users", "readonly");
+        const store = transaction.objectStore("users");
+        const request = store.get(userId);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+/**
  * gets a user by username
  * @param {*} username 
  * @description This function is needed when registering users to prevent duplicate users

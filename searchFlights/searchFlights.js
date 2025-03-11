@@ -104,6 +104,64 @@ function swapLocations() {
     document.getElementById("flightTo").value = flightFrom;
 }
 
+async function loadFlightsFromDB() {
+    let flights = await getAllFlights();
+    let flightSection = document.getElementById("sampleFlights");
+    for (let flight of flights) {
+        let newFlight = document.createElement("div");
+        newFlight.className = "row border border-subtle rounded m-0 mb-3 py-2 align-items-center";
+        newFlight.innerHTML = `
+                    <div class="col-12 col-md-1">
+                        <p>${flight.flightNo}</p>
+                    </div>
+                    <div class="col-12 col-md-1">
+                        <p>${flight.airline}</p>
+                    </div>
+                    <div class="col-12 col-md-1">
+                        <p>${flight.planeName}</p>
+                    </div>
+                    <div class="col-12 col-md-3 d-flex justify-content-evenly align-items-center">
+                        <div class="align-items-center">
+                            <p>${flight.departureTime}</p>
+                            <p>${flight.departureDate}</p>
+                        </div>
+                        <p>-</p>
+                        <div class="align-items-center">
+                            <p>${flight.departureTime}</p>
+                            <p>${flight.departureDate}</p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <p>${flight.duration}</p>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <p>Price: <span>${flight.economyCurrentPrice}</span></p>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <button class="btn btn-outline-secondary">Select Flight</button>
+                    </div>
+                    
+        `;
+        flightSection.appendChild(newFlight);
+    }
+}
+
+function loginDashboardButtonSwap() {
+    const loggedInStatus = localStorage.getItem("loginStatus");
+    const userType = localStorage.getItem("userType");
+    const loginButton = document.getElementById("loginButton");
+    const adminDashboardButton = document.getElementById("adminDashboardButton");
+    const userDashboardButton = document.getElementById("userDashboardButton");
+    if ((loggedInStatus == "true") && (userType == "admin")) {
+        loginButton.classList.add("d-none");
+        adminDashboardButton.classList.remove("d-none")
+    }
+    if ((loggedInStatus == "true") && (userType == "customer")) {
+        loginButton.classList.add("d-none");
+        userDashboardButton.classList.remove("d-none");
+    }
+}
+
 /**
  * Event Lister for loading the page
  * @description
@@ -115,3 +173,7 @@ document.addEventListener("DOMContentLoaded", protectPage);
  * Loads search data to DOM on opening file
  */
 document.addEventListener("DOMContentLoaded", loadSearchDetails);
+
+document.addEventListener("DOMContentLoaded", loadFlightsFromDB);
+
+document.addEventListener("DOMContentLoaded", loginDashboardButtonSwap);

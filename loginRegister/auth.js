@@ -17,11 +17,31 @@ function protectPage() {
 }
 
 /**
+ * redirects non-customers to index.html if access is denied
+ */
+function protectCustomerPage() {
+    if (isLoggedIn() && (localStorage.getItem("userType") !== "customer")) {
+        // alert("Page not accessible without logging in!")
+        window.location.href = "/homepage/index.html";
+    }
+}
+
+/**
  * prevents logged in users from trying to login again
  */
 function redirectIfLoggedIn() {
     if (isLoggedIn()) {
         window.location.href = "/homepage/index.html";
+    }
+}
+
+/**
+ * Function to check if user is admin or customer
+ */
+function adminDashboardCheck() {
+    let userType = localStorage.getItem("userType");
+    if (userType !== "admin") {
+        window.location.href = '/homepage/index.html'
     }
 }
 

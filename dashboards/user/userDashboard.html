@@ -13,8 +13,20 @@
 </head>
 <body>
     <div class="container text-center mt-5">
-        <!-- Logout Button -->
-        <button class="btn btn-danger" onclick="logout()">Logout</button>
+        <!-- Navbar -->
+        <nav class="navbar sticky-top py-3 my-5 bg-white">
+            <div class="container p-0">
+                <!-- Brand -->
+                <a class="navbar-brand" href="/homepage/index.html"><h2>Fly Easy</h2></a>
+                <!-- Logout Button -->
+                <button class="btn btn-danger px-4 py-2" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+        <!-- Navigation Buttons -->
+        <div class="mt-5 d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
+            <a href="/dashboards/user/userDetails/userDetails.html"><button class="btn btn-success p-4 fs-3">User Details</button></a>
+            <a href=""><button class="btn btn-primary p-4 fs-3">Bookings</button></a>
+        </div>
     </div>
 </body>
 </html>

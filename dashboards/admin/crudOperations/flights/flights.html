@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Flights</title>
-    <!-- Bootstrap CDN -->
+    <title>Flights</title>
+    <!-- Bootstrap CDN (temporary solution) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- DB Files -->
     <script defer src="/models/db.js"></script>
     <script defer src="/models/flightsDB.js"></script>
-    <!-- JS File (auth.js needed for route protection) -->
-    <script defer src="../loginRegister/auth.js"></script>
-    <script defer src="searchFlights.js"></script>
+    <!-- JS Files (auth.js for restricting unauthorized access) -->
+    <script defer src="/loginRegister/auth.js"></script>
+    <script defer src="flights.js"></script>
+    <script defer src="/dashboards/admin/crudOperations/flights/addFlight/addFlight.js"></script>
     <!-- CSS Style to stop default behaviour -->
     <style>
         p {
@@ -21,36 +22,22 @@
     </style>
 </head>
 <body>
-    <!-- Outer Container -->
-    <div class="container text-center">
-         <!-- Navbar -->
-         <nav class="navbar sticky-top py-3 my-5 bg-white">
+    <div class="container mt-5 text-center">
+        <!-- Navbar -->
+        <nav class="navbar sticky-top py-3 my-5 bg-white">
             <div class="container p-0">
                 <!-- Brand -->
-                <a class="navbar-brand" href="../homepage/index.html"><h2>Fly Easy</h2></a>
+                <a class="navbar-brand" href="/homepage/index.html"><h2>Fly Easy</h2></a>
                 <div>
-                    <!-- Login Button -->
-                <a href="/loginRegister/login/login.html"><button class="btn btn-primary px-4 py-2" id="loginButton">Login</button></a>
-                <!-- Admin Dashboard Button -->
-                <a href="../dashboards/admin/adminDashboard.html"><button class="btn btn-primary px-4 py-2 d-none" id="adminDashboardButton">Dashboard</button></a>
-                <!-- User Dashboard Button -->
-                <a href="../dashboards/user/userDashboard.html"><button class="btn btn-primary px-4 py-2 d-none" id="userDashboardButton">Dashboard</button></a>
+                    <!-- Add Flight Button -->
+                    <a href="../flights/addFlight/addFlight.html"><button class="btn btn-success px-4 py-2">Add Flight</button></a>
+                    <!-- Logout Button -->
+                    <button class="btn btn-danger px-4 py-2" onclick="logout()">Logout</button>
                 </div>
             </div>
         </nav>
         <!-- Flight Search Form -->
-        <form id="flightSearchForm" onsubmit=saveSearchData(event)>
-            <!-- Trip Type Radio Buttons -->
-            <div id="tripType" class="mb-3">
-                <div class="btn-group">
-                    <!-- One Way -->
-                    <input type="radio" class="btn-check" name="tripType" id="oneWay" value="oneWay" checked onchange="toggleTripType()" required>
-                    <label class="btn btn-outline-primary" for="oneWay">One Way</label>
-                    <!-- Round Trip -->
-                    <input type="radio" class="btn-check" name="tripType" id="roundTrip" value="roundTrip" onchange="toggleTripType()" required>
-                    <label class="btn btn-outline-primary" for="roundTrip">Round Trip</label>
-                </div>
-            </div>
+        <form class="mt-5" id="flightSearchForm" onsubmit=saveSearchData(event)>
             <!-- Flight Details Input Fields -->
             <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
                 <!-- To / From Input Fields -->
@@ -66,18 +53,11 @@
                 <!-- Date Selection -->
                 <div class="d-flex gap-2">
                     <input type="date" name="departureDate" id="departureDate" class="form-control p-4" required>
-                    <input type="date" name="returnDate" id="returnDate" class="form-control p-4 d-none">
+                    <input type="text" name="flightNo" id="flightNo" placeholder="Flight No." class="form-control p-4">
                 </div>
                <!-- No of Travellers / Travel Class -->
                 <div class="d-flex gap-2">
-                    <select class="form-select" aria-label="Default select example" id="noOfTraveller" name="noOfTraveller" required>
-                        <option value="" selected disabled>Passengers</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>
+                    <input type="number" name="remainingCapacity" id="remainingCapacity" placeholder="Seats Left" class="form-control p-4">
                     <select class="form-select" aria-label="Default select example" id="travelClass" name="travelClass" required>
                         <option value="" selected disabled>Class</option>
                         <option value="1">Economy</option>
@@ -96,7 +76,7 @@
                 <label class="me-2">Sort by:</label>
                 <div class="btn-group">
                     <input type="radio" class="btn-check" name="sortOptions" id="sortPrice" value="price" onchange="sortFlights()" checked>
-                    <label class="btn btn-outline-primary" for="sortPrice">Price</label>
+                    <label class="btn btn-outline-primary" for="sortPrice">Price (Low to High)</label>
 
                     <input type="radio" class="btn-check" name="sortOptions" id="sortDuration" value="duration" onchange="sortFlights()">
                     <label class="btn btn-outline-primary" for="sortDuration">Duration</label>
@@ -109,16 +89,13 @@
             <div id="sampleFlights">
                 <!-- Sample Flight -->
                 <!-- <div class="row border border-subtle rounded m-0 mb-3 py-2 align-items-center">
-                    <div class="col-12 col-md-1">
+                    <div class="col-12 col-md-1 flightNo">
                         <p>6E 6051</p>
                     </div>
                     <div class="col-12 col-md-1">
                         <p>Indigo</p>
                     </div>
-                    <div class="col-12 col-md-1">
-                        <p>Airbus A321neo</p>
-                    </div>
-                    <div class="col-12 col-md-3 d-flex justify-content-evenly align-items-center">
+                    <div class="col-12 col-md-2 d-flex justify-content-evenly align-items-center">
                         <div class="align-items-center">
                             <p>1:00 PM</p>
                             <p>24-03-2025</p>
@@ -129,14 +106,31 @@
                             <p>24-03-2024</p>
                         </div>
                     </div>
-                    <div class="col-12 col-md-2">
+                    <div class="col-12 col-md-1">
                         <p>3:00 hr</p>
                     </div>
-                    <div class="col-12 col-md-2">
-                        <p>Price: <span>5000</span></p>
+                    <div class="col-12 col-md-1">
+                        <p>Airbus A321neo</p>
                     </div>
                     <div class="col-12 col-md-2">
-                        <button class="btn btn-outline-secondary">Select Flight</button>
+                        <p>Seats Left:</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <p>Economy: <span>50</span></p>
+
+                            <p>Business: <span>5</span></p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <p>Ticket Prices:</p>
+                        <div class="d-flex gap-1 justify-content-center">
+                            <p>Economy: <span>7000</span></p>
+
+                            <p>Business: <span>25000</span></p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex gap-2 justify-content-center">
+                        <button class="btn btn-outline-primary">Edit</button>
+                        <button class="btn btn-outline-danger deleteFlightBtn">Delete</button>
                     </div>
                 </div> -->
             </div>

@@ -20,13 +20,13 @@
  * @param {*} businessCurrentPrice 
  * @returns 
  */
-const addFlightToDB = async (flightNo, planeType, airline, departurePlace, departureDate, departureTime, arrivalPlace, arrivalDate, arrivalTime, duration, economyCapacity, economyBookedCount, businessCapacity, businessBookedCount, economyBasePrice, businessBasePrice, economyCurrentPrice, businessCurrentPrice) => {
+const addFlightToDB = async (flightNo, planeName, airline, departurePlace, departureDate, departureTime, arrivalPlace, arrivalDate, arrivalTime, duration, economyCapacity, economyBookedCount, businessCapacity, businessBookedCount, economyBasePrice, businessBasePrice, economyCurrentPrice, businessCurrentPrice) => {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const flight = {
             flightId: crypto.randomUUID(),
             flightNo,
-            planeType,
+            planeName,
             airline,
             departurePlace,
             departureDate,
@@ -132,6 +132,24 @@ const deleteFlight = async (flightId) => {
         const request = store.delete(flightId);
 
         request.onsuccess = () => resolve(`Flight ${flightId} deleted`);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+/**
+ * gets flight from the DB by flight number
+ * @param {*} flightNo 
+ * @returns 
+ */
+const deleteFlightsByFlightNo = async (flightNo) => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("flights", "readonly");
+        const store = transaction.objectStore("flights");
+        const index = store.index("flightNo");
+        const request = index.delete(flightNo);
+
+        request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
 };

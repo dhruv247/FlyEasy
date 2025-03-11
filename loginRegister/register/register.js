@@ -15,6 +15,8 @@ async function saveRegistrationData(event) {
     const email = formData.get("emailInput");
     const password = formData.get("passwordInput");
     const confirmPassword = formData.get("confirmPasswordInput");
+    const adminRegisterCodeInput = formData.get("adminRegisterCode") // Entered by the user
+    const adminRegisterCode = 'iAmAdmin' // Stored code for creating admins
     try {
         if (password !== confirmPassword) {
             throw new Error("Passwords do not match");
@@ -28,12 +30,22 @@ async function saveRegistrationData(event) {
             throw new Error("Username already taken");
         }
         const hashedPassword = hashPassword(password);
-        const newUser = await addUserToDB(
-            username,
-            email,
-            hashedPassword,
-            "customer"
-        );
+        
+        if (adminRegisterCodeInput === adminRegisterCode) {
+            const newUser = await addUserToDB(
+                username,
+                email,
+                hashedPassword,
+                "admin"
+            );
+        } else {
+            const newUser = await addUserToDB(
+                username,
+                email,
+                hashedPassword,
+                "customer"
+            );
+        }
         alert("Registration successful! Please login now.");
         window.location.href = "../login/login.html";
     } catch (error) {

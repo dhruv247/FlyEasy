@@ -120,7 +120,24 @@ function swapLocations() {
     document.getElementById("flightTo").value = flightFrom;
 }
 
+function loginDashboardButtonSwap() {
+    const loggedInStatus = localStorage.getItem("loginStatus");
+    const userType = localStorage.getItem("userType");
+    const loginButton = document.getElementById("loginButton");
+    const adminDashboardButton = document.getElementById("adminDashboardButton");
+    const userDashboardButton = document.getElementById("userDashboardButton");
+    if ((loggedInStatus == "true") && (userType == "admin")) {
+        loginButton.classList.add("d-none");
+        adminDashboardButton.classList.remove("d-none")
+    }
+    if ((loggedInStatus == "true") && (userType == "customer")) {
+        loginButton.classList.add("d-none");
+        userDashboardButton.classList.remove("d-none");
+    }
+}
+
 /**
  * Loads search data to DOM on opening file
  */
 document.addEventListener("DOMContentLoaded", loadSearchDetails); // Load Search Details
+document.addEventListener("DOMContentLoaded", loginDashboardButtonSwap); // Load Search Details
