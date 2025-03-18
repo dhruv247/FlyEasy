@@ -1,28 +1,20 @@
 /**
- * checks if a user is logged in (using local storage)
- * @returns true/false
+ * redirects non-customer users to index.html if access is denied
  */
-function isLoggedIn() {
-    return localStorage.getItem("loginStatus") == "true";
-}
-
-/**
- * redirects users to index.html if access is denied
- */
-function protectPage() {
-    if (!isLoggedIn()) {
-        // alert("Page not accessible without logging in!")
+function protectCustomerPage() {
+    const userType = getUserType();
+    if (userType !== "customer") {
         window.location.href = "/homepage/index.html";
     }
 }
 
 /**
- * redirects non-customers to index.html if access is denied
+ * Function to check if user is admin
  */
-function protectCustomerPage() {
-    if (isLoggedIn() && (localStorage.getItem("userType") !== "customer")) {
-        // alert("Page not accessible without logging in!")
-        window.location.href = "/homepage/index.html";
+function adminDashboardCheck() {
+    const userType = getUserType();
+    if (userType !== "admin") {
+        window.location.href = '/homepage/index.html'
     }
 }
 
@@ -30,18 +22,8 @@ function protectCustomerPage() {
  * prevents logged in users from trying to login again
  */
 function redirectIfLoggedIn() {
-    if (isLoggedIn()) {
+    if (localStorage.getItem("loginStatus") == "true") {
         window.location.href = "/homepage/index.html";
-    }
-}
-
-/**
- * Function to check if user is admin or customer
- */
-function adminDashboardCheck() {
-    let userType = localStorage.getItem("userType");
-    if (userType !== "admin") {
-        window.location.href = '/homepage/index.html'
     }
 }
 

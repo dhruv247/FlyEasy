@@ -4,7 +4,7 @@
  * @param {*} email 
  * @param {*} password 
  * @param {*} userType 
- * @returns 
+ * @returns user object (resolve) / error (reject)
  */
 const addUserToDB = async (username, email, password, userType) => {
     const db = await openDB();
@@ -21,14 +21,14 @@ const addUserToDB = async (username, email, password, userType) => {
         const transaction = db.transaction("users", "readwrite");
         const store = transaction.objectStore("users");
         const request = store.add(user);
-        request.onsuccess = () => resolve(user);
+        request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
 };
 
 /**
  * Gets all users from DB
- * @returns
+ * @returns user (resolve) / error (reject)
  */
 const getAllUsers = async () => {
     const db = await openDB();
@@ -36,7 +36,6 @@ const getAllUsers = async () => {
         const transaction = db.transaction("users", "readonly");
         const store = transaction.objectStore("users");
         const request = store.getAll();
-
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -45,7 +44,7 @@ const getAllUsers = async () => {
 /**
  * Gets a user by email (custom index)
  * @param {*} email 
- * @returns 
+ * @returns user (resolve) / error (reject)
  */
 const getUserByEmail = async (email) => {
     const db = await openDB();
@@ -54,7 +53,6 @@ const getUserByEmail = async (email) => {
         const store = transaction.objectStore("users");
         const index = store.index("email");
         const request = index.get(email);
-
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -63,7 +61,8 @@ const getUserByEmail = async (email) => {
 /**
  * Gets a user by userId
  * @param {*} userId 
- * @returns 
+ * @description this function is used to maintain state (used in userDetails.js)
+ * @returns user (resolve) / error (reject)
  */
 const getUserByUserId = async (userId) => {
     const db = await openDB();
@@ -71,7 +70,6 @@ const getUserByUserId = async (userId) => {
         const transaction = db.transaction("users", "readonly");
         const store = transaction.objectStore("users");
         const request = store.get(userId);
-
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -80,8 +78,8 @@ const getUserByUserId = async (userId) => {
 /**
  * gets a user by username
  * @param {*} username 
- * @description This function is needed when registering users to prevent duplicate users
- * @returns 
+ * @description This function is needed when registering users to prevent duplicate usernames
+ * @returns user (resolve) / error (reject)
  */
 const getUserByUsername = async (username) => {
     const db = await openDB();
@@ -90,7 +88,6 @@ const getUserByUsername = async (username) => {
         const store = transaction.objectStore("users");
         const index = store.index("username");
         const request = index.get(username);
-
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -100,7 +97,11 @@ const getUserByUsername = async (username) => {
  * Update user details
  * @param {*} userId 
  * @param {*} updates 
- * @returns 
+ * @description
+ * 1. gets user by userId
+ * 2. updates only select fields
+ * 3. puts the user into indexedDB
+ * @returns user (resolve) / error (reject)
  */
 const updateUser = async (userId, updates) => {
     const db = await openDB();
@@ -108,27 +109,22 @@ const updateUser = async (userId, updates) => {
         const transaction = db.transaction("users", "readwrite");
         const store = transaction.objectStore("users");
         const request = store.get(userId);
-
         request.onsuccess = () => {
             const user = request.result;
             if (!user) return reject("User not found");
-
-            // Update only provided fields
             Object.assign(user, updates, { updatedAt: new Date().toISOString().split("T")[0] });
-
             const updateRequest = store.put(user);
             updateRequest.onsuccess = () => resolve(user);
             updateRequest.onerror = () => reject(updateRequest.error);
         };
-
         request.onerror = () => reject(request.error);
     });
 };
 
 /**
- * Deletes user by userID (another function needed to delete by email)
- * @param {*} userId 
- * @returns 
+ * Deletes user by userID
+ * @param {*} userId
+ * @returns user (resolve) / error (reject)
  */
 const deleteUser = async (userId) => {
     const db = await openDB();
@@ -136,7 +132,6 @@ const deleteUser = async (userId) => {
         const transaction = db.transaction("users", "readwrite");
         const store = transaction.objectStore("users");
         const request = store.delete(userId);
-
         request.onsuccess = () => resolve(`User ${userId} deleted`);
         request.onerror = () => reject(request.error);
     });

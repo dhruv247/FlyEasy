@@ -1,6 +1,7 @@
-// Variables to control name of DB and version control for db updates
-const DB_NAME = "Fly Easy";
-const DB_VERSION = 1;
+// Variables to control name of DB and version control for DB updates
+const DbName = "FlyEasy";
+const DbVersion = 1;
+
 /**
  * This function handles indexedDB initialization
  * @description
@@ -9,24 +10,36 @@ const DB_VERSION = 1;
  * 3. Creates object stores
  * 4. Creates indices for the object stores
  * 5. Uses promises for async operations with indexedDB
- * @returns a promise that resolves and return an indexedDB object
+ * @returns a promise that resolves to an indexedDB object on success
  */
 const openDB = () => {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        const request = indexedDB.open(DbName, DbVersion);
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            // Creates a flights store if it doesn't exist
+
+            // User Object Store
+            if (!db.objectStoreNames.contains("users")) {
+                const userStore = db.createObjectStore("users", { keyPath: "userId" });
+                userStore.createIndex("email", "email", { unique: true });
+                userStore.createIndex("username", "username", { unique: true });
+            }
+
+            // Flight Object Store
             if (!db.objectStoreNames.contains("flights")) {
                 const flightStore = db.createObjectStore("flights", { keyPath: "flightId" });
                 flightStore.createIndex("flightNo", "flightNo", { unique: true });
             }
-            // Create users store if it doesn't exist
-            if (!db.objectStoreNames.contains("users")) {
-                const userStore = db.createObjectStore("users", { keyPath: "userId" });
-                // Create indexes for quick lookups
-                userStore.createIndex("email", "email", { unique: true });
-                userStore.createIndex("username", "username", { unique: true });
+
+            // Tickets Object Store
+            if (!db.objectStoreNames.contains("tickets")) {
+                const ticketStore = db.createObjectStore("tickets", { keyPath: "ticketId" });
+            }
+
+            // Bookings Object Store
+            if (!db.objectStoreNames.contains("bookings")) {
+                const bookingStore = db.createObjectStore("bookings", { keyPath: "bookingId" });
+                bookingStore.createIndex("userId", "userId", { unique: false });
             }
         };
         request.onsuccess = (event) => resolve(event.target.result);

@@ -2,24 +2,6 @@
 let searchedFlights = [];
 
 /**
- * Saves flight search data to localStorage
- * @param {Event} event - Form submission event
- * @description
- * This function:
- * 1. Stores search parameters in localStorage:
- *    - Trip type (one way/round trip)
- *    - Flight details (from, to, dates)
- *    - Travel preferences (class, passengers)
- * 2. Keeps user in search results page
- */
-function saveSearchData(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    saveFlightSearchData(formData);
-}
-
-/**
  * Loads search data from local storage to maintain search field input persistence
  * @description
  * 1. This Function uses trip type to decide which fields to show
@@ -27,25 +9,21 @@ function saveSearchData(event) {
  */
 function loadSearchDetails() {
     const searchData = getFlightSearchData();
-    if (searchData.tripType) {
-        if (searchData.tripType === "oneWay") {
-            document.getElementById("oneWay").checked = true;
-            document.getElementById("returnDate").classList.add("d-none");
-            document.getElementById("returnDate").removeAttribute("required");
-        } else {
-            document.getElementById("roundTrip").checked = true;
-            document.getElementById("returnDate").classList.remove("d-none");
-            document.getElementById("returnDate").setAttribute("required", "required");
-        }
-    }
+    
     if (searchData.flightFrom) {
-        document.getElementById("flightFrom").value = searchData.flightFrom;
+        const flightTo = document.getElementById("flightTo");
+        flightTo.value = searchData.flightFrom;
+        flightTo.setAttribute("readonly", "readonly");
     }
     if (searchData.flightTo) {
-        document.getElementById("flightTo").value = searchData.flightTo;
+        const flightFrom = document.getElementById("flightFrom");
+        flightFrom.value = searchData.flightTo;
+        flightFrom.setAttribute("readonly", "readonly");
     }
     if (searchData.departureDate) {
-        document.getElementById("departureDate").value = searchData.departureDate;
+        const departureDate = document.getElementById("departureDate");
+        departureDate.value = searchData.departureDate;
+        departureDate.setAttribute("readonly", "readonly");
     }
     if (searchData.returnDate) {
         document.getElementById("returnDate").value = searchData.returnDate;
@@ -53,10 +31,14 @@ function loadSearchDetails() {
         document.getElementById("returnDate").setAttribute("required", "required");
     }
     if (searchData.noOfTraveller) {
-        document.getElementById("noOfTraveller").value = searchData.noOfTraveller;
+        const noOfTraveller = document.getElementById("noOfTraveller");
+        noOfTraveller.value = searchData.noOfTraveller;
+        noOfTraveller.disabled = true;
     }
     if (searchData.travelClass) {
-        document.getElementById("travelClass").value = searchData.travelClass;
+        const travelClass = document.getElementById("travelClass");
+        travelClass.value = searchData.travelClass;
+        travelClass.disabled = true;
     }
 }
 
@@ -70,9 +52,7 @@ function loadSearchDetails() {
  */
 async function searchFlights(event) {
     event.preventDefault();
-    saveSearchData(event);
-    
-    // Reset sort buttons to unselected state
+    // Reset sort radio buttons
     document.getElementById("sortPrice").checked = false;
     document.getElementById("sortDuration").checked = false;
     
@@ -82,7 +62,8 @@ async function searchFlights(event) {
     // Get all required fields
     const departurePlace = formData.get("flightFrom").toLowerCase().trim();
     const arrivalPlace = formData.get("flightTo").toLowerCase().trim();
-    const departureDate = formData.get("departureDate");
+    const returnDate = formData.get("returnDate");
+    changeReturnDate(returnDate);
     const numberOfPassengers = Number(formData.get("noOfTraveller"));
     const travelClass = formData.get("travelClass"); // "1" for Economy, "2" for Business
     const flights = await getAllFlights();
@@ -92,8 +73,8 @@ async function searchFlights(event) {
         matchesSearch = matchesSearch && flight.departurePlace.toLowerCase().includes(departurePlace);
         // arrival place
         matchesSearch = matchesSearch && flight.arrivalPlace.toLowerCase().includes(arrivalPlace);
-        // departure date
-        matchesSearch = matchesSearch && flight.departureDate === departureDate;
+        // return date
+        matchesSearch = matchesSearch && flight.departureDate === returnDate;
         // travel class and number of passengers
         if (travelClass === "1") {
             // Economy class
@@ -111,7 +92,7 @@ async function searchFlights(event) {
         const flightSection = document.getElementById("sampleFlights");
         flightSection.innerHTML = `
             <div class="alert alert-info" role="alert">
-                No flights found matching your search criteria.
+                No flights found matching your search criteria. Please change your return date.
             </div>
         `;
     } else {
@@ -120,7 +101,7 @@ async function searchFlights(event) {
 }
 
 /**
- * Event listeners for search flight
+ * Event listeners for select flight
  */
 function attachEventListeners() {
     const selectFlightButtons = document.querySelectorAll(".selectFlightBtn");
@@ -134,8 +115,8 @@ function attachEventListeners() {
                     storeReturnFlightId("oneWay")
                     window.location.href = "./enterDetails/enterDetails.html"
                 } else {
-                    storeDepartureFlightId(flightId);
-                    window.location.href = "./roundTrip/roundTrip.html"
+                    storeReturnFlightId(flightId)
+                    window.location.href = "/searchFlights/enterDetails/enterDetails.html"
                 }
             } catch (error) {
                 alert(error.message);
@@ -193,31 +174,6 @@ function flightDOMStructure(flights) {
         flightSection.appendChild(newFlight);
     }
     attachEventListeners();
-}
-
-/**
- * Function to toggle return date input field on the basis of trip type (round / one way)
- */
-function toggleTripType() {
-    const roundTripType = document.getElementById("roundTrip").checked;
-    const returnDateInput = document.getElementById("returnDate");
-    if (roundTripType) {
-        returnDateInput.classList.remove("d-none"); // Show return date input
-        returnDateInput.setAttribute("required", "required"); // Make required
-    } else {
-        returnDateInput.classList.add("d-none"); // Hide return date input
-        returnDateInput.removeAttribute("required"); // Remove required
-    }
-}
-
-/**
- * Swap To and From Input Fields
- */
-function swapLocations() {
-    const flightFrom = document.getElementById("flightFrom").value;
-    const flightTo = document.getElementById("flightTo").value;
-    document.getElementById("flightFrom").value = flightTo;
-    document.getElementById("flightTo").value = flightFrom;
 }
 
 /**

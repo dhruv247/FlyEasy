@@ -1,76 +1,139 @@
 users = [{
-    userId: "UUID", // unique id
-    username: "dhruv123",
-    email: "dhruv@gmail.com",
+    userId: "UUID", // Unique ID - Primary Key (Automatic)
+    username: "dhruv123", // Unique - Custom Index (case sensitive)
+    email: "dhruv@gmail.com", // Unique - Custom Index (convert to lowercase when storing and checking against)
     password: "xyz", // hashed
-    createdAt: '22-01-2025', // Fixed
-    updatedAt: '22-02-2025',
-    userType: "admin" // [admin, customer] (admin can change everything for a user, flights, and bookings)
+    createdAt: '22-01-2025', // Automatic
+    updatedAt: '22-02-2025', // Automatic
+    userType: "admin" // admin, customer
 }]
 
 flights = [{
-    flightId: "UUID",
-    flightNo: "IN121", // Reused on repeated flights
-    planeName: "Airbus A350",
-    airline: "Indigo",
-    departureTime: "1860",
-    departureDate: "22-01-2025",
-    departurePlace: "New York, US - John F Kennedy Airport", // Static
-    arrivalPlace: "Los Angeles, US - Los Angeles International Airport", //Static
-    arrivalTime: "2040",
-    arrivalDate: "22-01-2025",
-    duration: flights.arrivalTime-flights.departureTime,
-    economyCapacity: 100, // Static
-    economyBookedCount: 0, // Increase dynamically
-    businessCapacity: 20, // Static
-    businessBookedCount: 0, // Increase dynamically
-    economyBasePrice: 5000, // Static
-    businessBasePrice: 15000, // Static
-    economyCurrentPrice: 5050, // Price dynamically using (((seatsBooked/100)*basePrice)+basePrice)
-    businessCurrentPrice: 17000,
-    createdAt: "xyz", // Price dynamically using (((seatsBooked/100)*basePrice)+basePrice)
-    updatedAt: "xyz"
+    flightId: "UUID", // Unique ID - Primary Key (Automatic)
+    flightNo: "IN121", // Unique - Custom Index (Custom Index and Case Sensitive)
+    planeName: "Airbus A350", // (Not Used for Search)
+    airline: "Indigo", // (Not Used for Search)
+    departurePlace: "John F Kennedy Airport - New York, USA", // convert to lowercase when storing and checking against
+    departureDate: "22-01-2025", // (Format decided by form-select)
+    departureTime: "1860", // (Format decided by form-select)
+    arrivalPlace: "Los Angeles International Airport - Los Angeles, USA", // convert to lowercase when storing and checking against
+    arrivalDate: "22-01-2025", // (Format decided by form-select)
+    arrivalTime: "2040", // (Format decided by form-select)
+    duration: "flights.arrivalDateTime-flights.departureDateTime", // By combining date and time
+    economyCapacity: 100, // Entered Manually (Type - Number)
+    economyBookedCount: 0, // Changed Dynamically (Type - Number)
+    businessCapacity: 20, // Entered Manually (Type - Number)
+    businessBookedCount: 0, // Changed Dynamically (Type - Number)
+    economyBasePrice: 5000, // Entered Manually (Type - Number)
+    businessBasePrice: 15000, // Entered Manually (Type - Number)
+    economyCurrentPrice: 5050, // Change Dynamically using (((seatsBooked/100)*basePrice)+basePrice)
+    businessCurrentPrice: 17000, // Change Dynamically using (((seatsBooked/100)*basePrice)+basePrice)
+    createdAt: "xyz", // Automatic
+    updatedAt: "xyz", // Automatic
+    changed: "No Changes" // No changes, Flight Times Changed
 }]
-
-bookings = [{
-    bookingId: "UUID", // Unique ID
-    user: {
-        userId: users.userId,
-        name: users.name,
-        email: users.email
-    },
-    flight: {
-        flightId: flights.flightId,
-        flightNo: flights.flightNo,
-        planeType: flights.planeType,
-        departureTime: flights.departureTime,
-        departureDate: flights.departureDate,
-        departurePlace: flights.departurePlace,
-        arrivalPlace: flights.arrivalPlace,
-        arrivalTime: flights.arrivalTime,
-        arrivalDate: flights.arrivalDate,
-        airline: "Indigo",
-    },
-    tickets: [
-        tickets.ticketID
-    ],
-    bookingDate: "21-01-2025", // Date of booking
-    bookingTime: "1430", // Time of booking
-    bookingPrice: 5050, // Price at the time of booking (Total price of tickets)
-    status: "confirmed", // "confirmed", "canceled" (admin and users can cancel a booking) 
-}]
-
 
 tickets = [
     {
-        ticketID: "UUID",
-        userID: users.userId,
-        flightID: flights.flightId,
-        nameOfFlyer: "Raj",
-        ageOfFlyer: 20,
-        EmailOfFlyer: "dhruvmahendru247@gmail.com",
-        tripType: "oneWay", // oneWay or roundTrip
-        seatType: "economy", // "economy" or "business"
-        ticketPrice: "5000" // Price of ticket (currentPrice)
+        ticketId: "UUID", // Unique ID - Primary Key (Automatic)
+        user: user.userId,
+        departureFlight: flight.flightId, // Flight for outbound journey
+        returnFlight: flight.flightId, // Flight for return journey (null for one-way)
+        nameOfFlyer: "Raj", // (Not Used for Search)
+        ageOfFlyer: 20, // (Not Used for Search, Type - Number)
+        emailOfFlyer: "dhruvmahendru247@gmail.com", // (Not Used for Search)
+        tripType: "oneWay", // oneWay or return
+        seatType: "economy", // economy or business
+        ticketPrice: 7500 // (departure flight price + return flight price) * 0.9
     }
 ]
+
+bookings = [{
+    bookingId: "UUID", // Unique ID - Primary Key (Automatic)
+    user: users.userId,
+    tickets: [ticket1.ticketId, ticket2.ticketId], // Array of ticket IDs
+    tripType: "oneWay", // oneWay or return
+    createdAt: "21-01-2025",
+    updatedAt: '22-02-2025',
+    bookingPrice: 5050, // Sum of all tickets
+    status: "confirmed" // confirmed, cancelled
+}]
+
+// ------------------------------------------------------------------ OLD SCHEMA FOR TICKETS AND BOOKINGS
+
+// tickets = [
+//     {
+//         ticketId: "UUID", // Unique ID - Primary Key (Automatic)
+//         user: {
+//             userId: users.userId,
+//             name: users.username,
+//             email: users.email
+//         },
+//         flight: {
+//             flightId: flights.flightId,
+//             flightNo: flights.flightNo,
+//             planeName: flights.planeName,
+//             airline: flights.airline,
+//             departurePlace: flights.departurePlace,
+//             departureDate: flights.departureDate,
+//             departureTime: flights.departureTime,
+//             arrivalPlace: flights.arrivalPlace,
+//             arrivalDate: flights.arrivalDate,
+//             arrivalTime: flights.arrivalTime,
+//             duration: flights.duration,
+//             economyCapacity: flights.economyCapacity,
+//             economyBookedCount: flights.economyBookedCount,
+//             businessCapacity: flights.businessCapacity,
+//             businessBookedCount: flights.businessBookedCount,
+//             economyBasePrice: flights.economyBasePrice,
+//             businessBasePrice: flights.businessBasePrice,
+//             economyCurrentPrice: flights.economyCurrentPrice,
+//             businessCurrentPrice: flights.businessCurrentPrice,
+//             changed: flights.changed
+//         },
+//         nameOfFlyer: "Raj", // (Not Used for Search)
+//         ageOfFlyer: 20, // (Not Used for Search, Type - Number)
+//         EmailOfFlyer: "dhruvmahendru247@gmail.com", // (Not Used for Search, Type - Number)
+//         tripType: "oneWay", // Automatic for all tickets within one booking (taken from form select in searchFlight.html)
+//         seatType: "economy", // Automatic for all tickets within one booking (taken from form select in searchFlight.html)
+//         ticketPrice: 7500 // (Combined Dynamically using - tripType, seatType, currentPrice for seatType (10 % Discount for round-trip) (Type - Number))
+//     }
+// ]
+
+// bookings = [{
+//     bookingId: "UUID", // Unique ID - Primary Key (Automatic)
+//     user: {
+//         userId: users.userId,
+//         username: user.username,
+//         email: users.email
+//     },
+//     flight: {
+//         flightId: flights.flightId,
+//         flightNo: flights.flightNo,
+//         planeName: flights.planeName,
+//         airline: flights.airline,
+//         departurePlace: flights.departurePlace,
+//         departureDate: flights.departureDate,
+//         departureTime: flights.departureTime,
+//         arrivalPlace: flights.arrivalPlace,
+//         arrivalDate: flights.arrivalDate,
+//         arrivalTime: flights.arrivalTime,
+//         duration: flights.duration,
+//         changed: flights.changed
+//     },
+//     tickets: [
+//         {
+//             ticketId: tickets.ticketId,
+//             nameOfFlyer: tickets.nameOfFlyer,
+//             ageOfFlyer: tickets.ageOfFlyer,
+//             emailOfFlyer: tickets.emailOfFlyer,
+//             tripType: tickets.tripType,
+//             seatType: tickets.seatType,
+//             ticketPrice: tickets.ticketPrice,
+//         }
+//     ],
+//     bookingDate: "21-01-2025", // (Automatic - createdAt)
+//     updatedAt: '22-02-2025', // (Automatic - Cancel Booking)
+//     bookingPrice: 5050, // Calculated by combining ticket prices (Type - Number)
+//     status: "confirmed", // confirmed, cancelled 
+// }]

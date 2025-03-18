@@ -11,6 +11,7 @@
     <script defer src="/models/db.js"></script>
     <script defer src="/models/flightsDB.js"></script>
     <!-- JS File (auth.js needed for route protection) -->
+    <script defer src="/localStorageOperations.js"></script>
     <script defer src="../loginRegister/auth.js"></script>
     <script defer src="searchFlights.js"></script>
     <!-- CSS Style to stop default behaviour -->
@@ -27,7 +28,7 @@
          <nav class="navbar sticky-top py-3 my-5 bg-white">
             <div class="container p-0">
                 <!-- Brand -->
-                <a class="navbar-brand" href="../homepage/index.html"><h2>Fly Easy</h2></a>
+                <a class="navbar-brand" href="../homepage/index.html"><h2>FlyEasy</h2></a>
                 <div>
                     <!-- Login Button -->
                 <a href="/loginRegister/login/login.html"><button class="btn btn-primary px-4 py-2" id="loginButton">Login</button></a>
@@ -39,7 +40,7 @@
             </div>
         </nav>
         <!-- Flight Search Form -->
-        <form id="flightSearchForm" onsubmit=saveSearchData(event)>
+        <form id="flightSearchForm" onsubmit=searchFlights(event)>
             <!-- Trip Type Radio Buttons -->
             <div id="tripType" class="mb-3">
                 <div class="btn-group">
@@ -92,17 +93,14 @@
         <!-- Display Flight Section (static for now!) -->
         <div id="displayFlightsSection" class="d-flex flex-column mt-5">
             <!-- Sorting Section -->
-            <form action="" class="my-3">
+            <form action="" class="my-3" id="sortFlights">
                 <label class="me-2">Sort by:</label>
                 <div class="btn-group">
-                    <input type="radio" class="btn-check" name="sortOptions" id="sortPrice" value="price" onchange="sortFlights()" checked>
-                    <label class="btn btn-outline-primary" for="sortPrice">Price</label>
+                    <input type="radio" class="btn-check" name="sortOptions" id="sortPrice" value="price" onchange="sortFlights()">
+                    <label class="btn btn-outline-primary" for="sortPrice">Price (Low to High)</label>
 
                     <input type="radio" class="btn-check" name="sortOptions" id="sortDuration" value="duration" onchange="sortFlights()">
                     <label class="btn btn-outline-primary" for="sortDuration">Duration</label>
-
-                    <input type="radio" class="btn-check" name="sortOptions" id="sortDeparture" value="departure" onchange="sortFlights()">
-                    <label class="btn btn-outline-primary" for="sortDeparture">Departure Time</label>
                 </div>
             </form>
             <!-- Sample Flights -->

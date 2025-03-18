@@ -1,47 +1,25 @@
 /**
- * Saves flight search data to localStorage and redirects to search page
+ * Saves flight search data to localStorage and redirects to searchFlights page
  * @param {Event} event - Form submission event
  * @description
  * This function:
  * 1. Checks if user is logged in
- * 2. Stores search parameters in localStorage:
- *    - Trip type (one way/round trip)
- *    - Flight details (from, to, dates)
- *    - Travel preferences (class, passengers)
- * 3. Redirects to search results page
+ * 2. Stores trip type, flight details, travel preferences in localStorage
+ * 3. Redirects to searchFlights page
  * @throws {Error} If user is not logged in, throws error
  */
 function saveSearchData(event) {
-    
-    const loginStatus = localStorage.getItem("loginStatus");
-
     try {
-        if (loginStatus == "true") {
-            event.preventDefault(); // Prevent default form submission
-    
-            const form = event.target; // Get the form element
-            const formData = new FormData(form); // Create FormData object
-    
-            // Store trip type based on selected radio button
-            const tripType = formData.get("tripType"); // "oneWay" or "roundTrip"
-            localStorage.setItem("tripType", tripType);
-    
-            // Store return date only if it's not hidden
-            if (tripType === "roundTrip" && !document.getElementById("returnDate").classList.contains("d-none")) {
-                localStorage.setItem("returnDate", formData.get("returnDate"));
+        if (getLoginStatus()) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            saveFlightSearchData(formData);
+            if (getUserType() === "customer") {
+                window.location.href = "../searchFlights/searchFlights.html";
             } else {
-                localStorage.removeItem("returnDate");
+                throw new Error("Admins cannot book flights! Please login with a customer ID.");
             }
-    
-            // Store other flight details
-            localStorage.setItem("flightFrom", formData.get("flightFrom"));
-            localStorage.setItem("flightTo", formData.get("flightTo"));
-            localStorage.setItem("departureDate", formData.get("departureDate"));
-            localStorage.setItem("travelClass", formData.get("travelClass"));
-            localStorage.setItem("noOfTraveller", formData.get("noOfTraveller"));
-    
-            // Redirect to search flights page
-            window.location.href = "../searchFlights/searchFlights.html";
         } else {
             throw new Error("Please log in before searching flights!");
         }
@@ -57,40 +35,39 @@ function saveSearchData(event) {
  * 2. Loads data from local storage for the fields that are needed
  */
 function loadSearchDetails() {
-    // Load trip type from local storage
-    if (localStorage.getItem("tripType")) {
-        const tripType = localStorage.getItem("tripType");
-        if (tripType === "oneWay") {
+    const searchData = getFlightSearchData();
+    // Load trip type
+    if (searchData.tripType) {
+        if (searchData.tripType === "oneWay") {
             document.getElementById("oneWay").checked = true;
-            document.getElementById("returnDate").classList.add("d-none"); // Hide return date for one way
-            document.getElementById("returnDate").removeAttribute("required"); // Ensure it's not required
+            document.getElementById("returnDate").classList.add("d-none");
+            document.getElementById("returnDate").removeAttribute("required");
         } else {
             document.getElementById("roundTrip").checked = true;
-            document.getElementById("returnDate").classList.remove("d-none"); // Show return date for round trip
-            document.getElementById("returnDate").setAttribute("required", "required"); // Make required
+            document.getElementById("returnDate").classList.remove("d-none");
+            document.getElementById("returnDate").setAttribute("required", "required");
         }
     }
-
-    // Load other flight details from local storage
-    if (localStorage.getItem("flightFrom")) {
-        document.getElementById("flightFrom").value = localStorage.getItem("flightFrom");
+    // Load other flight details
+    if (searchData.flightFrom) {
+        document.getElementById("flightFrom").value = searchData.flightFrom;
     }
-    if (localStorage.getItem("flightTo")) {
-        document.getElementById("flightTo").value = localStorage.getItem("flightTo");
+    if (searchData.flightTo) {
+        document.getElementById("flightTo").value = searchData.flightTo;
     }
-    if (localStorage.getItem("departureDate")) {
-        document.getElementById("departureDate").value = localStorage.getItem("departureDate");
+    if (searchData.departureDate) {
+        document.getElementById("departureDate").value = searchData.departureDate;
     }
-    if (localStorage.getItem("returnDate")) {
-        document.getElementById("returnDate").value = localStorage.getItem("returnDate");
-        document.getElementById("returnDate").classList.remove("d-none"); // Ensure return date is visible if set
-        document.getElementById("returnDate").setAttribute("required", "required"); // Make required
+    if (searchData.returnDate) {
+        document.getElementById("returnDate").value = searchData.returnDate;
+        document.getElementById("returnDate").classList.remove("d-none");
+        document.getElementById("returnDate").setAttribute("required", "required");
     }
-    if (localStorage.getItem("noOfTraveller")) {
-        document.getElementById("noOfTraveller").value = localStorage.getItem("noOfTraveller");
+    if (searchData.noOfTraveller) {
+        document.getElementById("noOfTraveller").value = searchData.noOfTraveller;
     }
-    if (localStorage.getItem("travelClass")) {
-        document.getElementById("travelClass").value = localStorage.getItem("travelClass");
+    if (searchData.travelClass) {
+        document.getElementById("travelClass").value = searchData.travelClass;
     }
 }
 
@@ -100,7 +77,6 @@ function loadSearchDetails() {
 function toggleTripType() {
     const roundTripType = document.getElementById("roundTrip").checked;
     const returnDateInput = document.getElementById("returnDate");
-
     if (roundTripType) {
         returnDateInput.classList.remove("d-none"); // Show return date input
         returnDateInput.setAttribute("required", "required"); // Make required
@@ -120,24 +96,27 @@ function swapLocations() {
     document.getElementById("flightTo").value = flightFrom;
 }
 
+/**
+ * changes login button to dashboard when user is logged in
+ */
 function loginDashboardButtonSwap() {
-    const loggedInStatus = localStorage.getItem("loginStatus");
-    const userType = localStorage.getItem("userType");
+    const loggedInStatus = getLoginStatus();
+    const userType = getUserType();
     const loginButton = document.getElementById("loginButton");
     const adminDashboardButton = document.getElementById("adminDashboardButton");
     const userDashboardButton = document.getElementById("userDashboardButton");
-    if ((loggedInStatus == "true") && (userType == "admin")) {
+    if (loggedInStatus && userType === "admin") {
         loginButton.classList.add("d-none");
-        adminDashboardButton.classList.remove("d-none")
+        adminDashboardButton.classList.remove("d-none");
     }
-    if ((loggedInStatus == "true") && (userType == "customer")) {
+    if (loggedInStatus && userType === "customer") {
         loginButton.classList.add("d-none");
         userDashboardButton.classList.remove("d-none");
     }
 }
 
 /**
- * Loads search data to DOM on opening file
+ * Event Triggers
  */
 document.addEventListener("DOMContentLoaded", loadSearchDetails); // Load Search Details
-document.addEventListener("DOMContentLoaded", loginDashboardButtonSwap); // Load Search Details
+document.addEventListener("DOMContentLoaded", loginDashboardButtonSwap); // Which button (login/dashboard) to show when page is loaded

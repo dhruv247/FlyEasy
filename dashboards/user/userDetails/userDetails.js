@@ -1,8 +1,13 @@
+/**
+ * loads user details to change user details form
+ * @description
+ * 1. gets user id from local storage
+ * 2. uses user id to get the user object from indexedDB
+ */
 async function loadUserDetails() {
-    
     try {
-        let userId = localStorage.getItem("userId");
-        let user = await getUserByUserId(userId);
+        const userId = getUserId();
+        const user = await getUserByUserId(userId);
         document.getElementById("emailInput").value = user.email;
         document.getElementById("usernameInput").value = user.username;
     } catch (error) {
@@ -22,19 +27,16 @@ async function loadUserDetails() {
  */
 async function changeUserDetails(event) {
     try {
-        let userId = localStorage.getItem("userId");
-        let user = await getUserByUserId(userId);
+        const userId = getUserId();
+        const user = await getUserByUserId(userId);
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-
-        let email = formData.get("emailInput");
-        let username = formData.get("usernameInput");
-
-        let oldPassword = formData.get("oldPasswordInput");
-        let newPasswordInput = formData.get("newPasswordInput");
-        let confirmPasswordInput = formData.get("confirmPasswordInput");
-
+        const email = formData.get("emailInput");
+        const username = formData.get("usernameInput");
+        const oldPassword = formData.get("oldPasswordInput");
+        const newPasswordInput = formData.get("newPasswordInput");
+        const confirmPasswordInput = formData.get("confirmPasswordInput");
         if (oldPassword) {
             if (hashPassword(oldPassword) === user.password) {
                 if (oldPassword !== newPasswordInput) {
@@ -60,7 +62,7 @@ async function changeUserDetails(event) {
                 throw new Error("Incorrect Password!")
             }
         } else {
-            let updatedUserDetails = await updateUser(userId, { email: email, username: username })
+            const updatedUserDetails = await updateUser(userId, { email: email, username: username })
         
             if (updatedUserDetails) {
                 alert("Details changed successfully!");
@@ -69,12 +71,13 @@ async function changeUserDetails(event) {
                 throw new Error("Details not changed! Please try again.")
             }
         }
-
     } catch (error) {
         alert(error.message)
     }
 }
 
-document.addEventListener("DOMContentLoaded", loadUserDetails);
-document.addEventListener("DOMContentLoaded", protectPage);
-document.addEventListener("DOMContentLoaded", protectCustomerPage);
+/**
+ * Event listeners
+ */
+document.addEventListener("DOMContentLoaded", loadUserDetails); // Load's current user's details into form 
+document.addEventListener("DOMContentLoaded", protectCustomerPage); // Route protection

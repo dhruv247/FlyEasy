@@ -30,7 +30,6 @@ async function saveRegistrationData(event) {
             throw new Error("Username already taken");
         }
         const hashedPassword = hashPassword(password);
-        
         if (adminRegisterCodeInput === adminRegisterCode) {
             const newUser = await addUserToDB(
                 username,

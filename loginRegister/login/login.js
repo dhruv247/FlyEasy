@@ -11,18 +11,17 @@ async function login(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
-    let email = formData.get("emailInput");
-    let password = formData.get("passwordInput");
-    let hashedPassword = hashPassword(password);
+    const email = formData.get("emailInput");
+    const password = formData.get("passwordInput");
+    const hashedPassword = hashPassword(password);
+    
     try {
         const user = await getUserByEmail(email);
         if (user) {
             if (user.password === hashedPassword) {
-                localStorage.setItem("loginStatus", true);
-                localStorage.setItem("userId", user.userId);
-                localStorage.setItem("userType", user.userType);
+                setUserLoginData(user);
                 alert("Logged in successfully!")
-                window.location.href = "../../homepage/index.html";
+                window.location.href = "/homepage/index.html";
             } else {
                 throw new Error("Incorrect password!");
             }
