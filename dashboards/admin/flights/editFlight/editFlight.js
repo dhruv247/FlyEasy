@@ -94,10 +94,11 @@ async function changeFlightDetails(event) {
                 departureTime: newDepartureTime,
                 arrivalTime: newArrivalTime,
                 duration: newDuration,
+                changed: "Flight Times Changed"
             }
             const flightId = localStorage.getItem("flightId");
-            updateFlight(flightId, updates);
-            if (updateFlight) {
+            const updatedFlight = await updateFlight(flightId, updates);
+            if (updatedFlight) {
                 alert("Flight times changed successfully!")
                 window.location.href = '../flights.html'
             } else {
@@ -106,6 +107,7 @@ async function changeFlightDetails(event) {
         }
     }
     catch (error) {
+        console.error("Error updating flight:", error);
         alert(error.message);
     }
 }

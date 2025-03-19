@@ -1,6 +1,6 @@
 /**
  * Adds a ticket to DB
- * @param {*} userId 
+ * @param {*} user
  * @param {*} departureFlight 
  * @param {*} returnFlight 
  * @param {*} nameOfFlyer 
@@ -11,12 +11,12 @@
  * @param {*} ticketPrice 
  * @returns ticket (resolve) / error (reject)
  */
-const addTicketToDB = async (userId, departureFlight, returnFlight, nameOfFlyer, emailOfFlyer, ageOfFlyer, tripType, seatType, ticketPrice) => {
+const addTicketToDB = async (user, departureFlight, returnFlight, nameOfFlyer, emailOfFlyer, ageOfFlyer, tripType, seatType, ticketPrice) => {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const ticket = {
             ticketId: crypto.randomUUID(),
-            user: userId,
+            user,
             departureFlight,
             returnFlight,
             nameOfFlyer,

@@ -1,3 +1,4 @@
+// ===== User Authentication & Profile Functions =====
 /**
  * Gets login status
  * @returns {boolean} True if user is logged in, false otherwise
@@ -23,6 +24,17 @@ function getUserId() {
 }
 
 /**
+ * Sets user login data
+ * @param {Object} user - User object containing userId and userType
+ */
+function setUserLoginData(user) {
+    localStorage.setItem("loginStatus", true);
+    localStorage.setItem("userId", user.userId);
+    localStorage.setItem("userType", user.userType);
+}
+
+// ===== Flight Search Parameters =====
+/**
  * gets travel class
  * @returns travel class as 1 or 2
  */
@@ -36,16 +48,6 @@ function getTravelClass() {
  */
 function getNoOfTraveller() {
     return localStorage.getItem("noOfTraveller");
-}
-
-/**
- * Sets user login data
- * @param {Object} user - User object containing userId and userType
- */
-function setUserLoginData(user) {
-    localStorage.setItem("loginStatus", true);
-    localStorage.setItem("userId", user.userId);
-    localStorage.setItem("userType", user.userType);
 }
 
 /**
@@ -79,14 +81,6 @@ function saveFlightSearchData(formData) {
 }
 
 /**
- * changes the return date from roundTrip.html
- * @param {*} returnDate 
- */
-function changeReturnDate(returnDate) {
-    localStorage.setItem("returnDate", returnDate)
-}
-
-/**
  * Loads flight search data
  * @returns {Object} Object of all flight search data
  */
@@ -102,6 +96,24 @@ function getFlightSearchData() {
     };
 }
 
+// ===== Trip Type & Date Management =====
+/**
+ * changes the return date from roundTrip.html
+ * @param {*} returnDate 
+ */
+function changeReturnDate(returnDate) {
+    localStorage.setItem("returnDate", returnDate)
+}
+
+/**
+ * gets the trip type from local storage
+ * @returns tripType
+ */
+function getTripType() {
+    return localStorage.getItem("tripType");
+}
+
+// ===== Flight Selection Management =====
 /**
  * stores the departure flight id in local storage
  * @param {*} flightId 
@@ -134,14 +146,16 @@ function getReturnFlightId() {
     return localStorage.getItem("returnFlightId");
 }
 
+// ===== Booking Management =====
 /**
- * gets the trip type from local storage
- * @returns tripType
+ * gets the bookingId from local storage
+ * @returns bookingId
  */
-function getTripType() {
-    return localStorage.getItem("tripType");
+function getBookingId() {
+    return localStorage.getItem("bookingId")
 }
 
+// ===== Storage Cleanup Functions =====
 function clearCurrentFlightDetails() {
     localStorage.removeItem("departureDate");
     localStorage.removeItem("departureFlightId");

@@ -42,94 +42,56 @@ function createFlyerForms() {
 }
 
 /**
- * This function is used to create bookins
+ * This function is used to create tickets and then use those tickets to create bookings
  * @param {*} event - form submission event
  * @description
- * 1. Get's all the details to create a ticket
+ * 1. Get's all initial data
  *  a. Get's data stored from local storage
- *  b. Calculates ticket prices
- *  c. creates a ticket
+ *  b. Get's user data from indexedDB
+ *  c. Get's flight data from indexedDB
  * 2. update's a flight's booked seats count and seat prices
- * 3. Create's a booking with the tickets
- * 4. redirects to the current user's booking dashboard
+ * 3. Calculate ticket prices using the updated flights (seat count and current prices)
+ * 4. Create tickets (using no of travellers)
+ * 5. combine tickets to create a booking
+ * 6. redirects to the current user's booking dashboard
  */
 async function createBooking(event) {
-
     try {
         event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
 
-        // Ticket details
+        // 1. Get all initial data
         const userId = getUserId();
-        const departureFlightId = getDepartureFlightId();
-        const returnFlightId = getReturnFlightId();
-        // console.log(departureFlightId);
-        // console.log(returnFlightId);
+        const userObject = await getUserByUserId(userId);
+        const user = {
+            userId: userObject.userId,
+            username: userObject.username,
+            email: userObject.email
+        };
+
         const tripType = getTripType();
         const seatType = getTravelClass();
-
-        // Calculate ticket price
-        const departureFlight = await getFlightsByFlightId(departureFlightId);
-        const returnFlight = await getFlightsByFlightId(returnFlightId);
-
-        let ticketPrice;
-
-        if (tripType == "oneWay") {
-            if (seatType == "1") {
-                ticketPrice = departureFlight.economyCurrentPrice
-            } else {
-                ticketPrice = departureFlight.businessCurrentPrice
-            }
-        } else {
-            if (seatType == "1") {
-                let departureTicketPrice = departureFlight.economyCurrentPrice;
-                let returnTicketPrice = returnFlight.economyCurrentPrice;
-                ticketPrice = (departureTicketPrice + returnTicketPrice)
-            } else {
-                let departureTicketPrice = departureFlight.businessCurrentPrice;
-                let returnTicketPrice = returnFlight.businessCurrentPrice;
-                ticketPrice = (departureTicketPrice + returnTicketPrice)
-            }
-        }
-        // console.log(typeof(ticketPrice))
-
-        let ticketIdArray = [];
-        let totalBookingPrice = 0;
-
-        for (let i = 1; i <= noOfTraveller; i++) {
-            // Using query selector instead of form as multiple flyers are filling the form
-            const flyerName = document.getElementById(`nameInput${i}`).value;
-            const flyerEmail = document.getElementById(`emailInput${i}`).value;
-            const flyerAge = parseInt(document.getElementById(`ageInput${i}`).value);
-
-            // create ticket
-            const ticket = await addTicketToDB(
-                userId,
-                departureFlightId,
-                returnFlightId,
-                flyerName,
-                flyerEmail,
-                flyerAge,
-                tripType,
-                seatType,
-                ticketPrice
-            );
-
-            ticketIdArray.push(ticket.ticketId);
-            totalBookingPrice += ticketPrice;
-        }
+        const departureFlightId = getDepartureFlightId();
+        let departureFlight = await getFlightsByFlightId(departureFlightId);
         
-        // Update seat counts and prices
-        if (tripType == "oneWay") {
+        let returnFlight = null;
+        let returnFlightId = null;
+        if (tripType !== "oneWay") {
+            returnFlightId = getReturnFlightId();
+            returnFlight = await getFlightsByFlightId(returnFlightId);
+        }
+
+        // 2. Update flight seat counts and prices first
+        if (tripType === "oneWay") {
             const seatUpdates = {};
-            if (seatType == "1") {
+            if (seatType === "1") {
                 const newEconomyCount = Number(departureFlight.economyBookedCount) + Number(noOfTraveller);
                 seatUpdates.economyBookedCount = newEconomyCount;
                 seatUpdates.economyCurrentPrice = Math.round(
                     ((newEconomyCount / Number(departureFlight.economyCapacity)) * Number(departureFlight.economyBasePrice)) + 
                     Number(departureFlight.economyBasePrice)
                 );
+                departureFlight.economyBookedCount = newEconomyCount;
+                departureFlight.economyCurrentPrice = seatUpdates.economyCurrentPrice;
             } else {
                 const newBusinessCount = Number(departureFlight.businessBookedCount) + Number(noOfTraveller);
                 seatUpdates.businessBookedCount = newBusinessCount;
@@ -137,71 +99,121 @@ async function createBooking(event) {
                     ((newBusinessCount / Number(departureFlight.businessCapacity)) * Number(departureFlight.businessBasePrice)) + 
                     Number(departureFlight.businessBasePrice)
                 );
+                departureFlight.businessBookedCount = newBusinessCount;
+                departureFlight.businessCurrentPrice = seatUpdates.businessCurrentPrice;
             }
             await updateFlight(departureFlightId, seatUpdates);
         } else {
-            // Handle return flight updates
             const departureUpdates = {};
             const returnUpdates = {};
 
-            if (seatType == "1") {
-                // Update economy seats and prices for both flights
-                const newDepartureEconomyCount = Number(departureFlight.economyBookedCount) + Number(noOfTraveller);
-                const newReturnEconomyCount = Number(returnFlight.economyBookedCount) + Number(noOfTraveller);
+            if (seatType === "1") {
+                departureUpdates.economyBookedCount = Number(departureFlight.economyBookedCount) + Number(noOfTraveller);
+                returnUpdates.economyBookedCount = Number(returnFlight.economyBookedCount) + Number(noOfTraveller);
                 
-                departureUpdates.economyBookedCount = newDepartureEconomyCount;
-                returnUpdates.economyBookedCount = newReturnEconomyCount;
-                
-                // Recalculate economy prices with rounding
                 departureUpdates.economyCurrentPrice = Math.round(
-                    ((newDepartureEconomyCount / Number(departureFlight.economyCapacity)) * Number(departureFlight.economyBasePrice)) + 
+                    ((departureUpdates.economyBookedCount / Number(departureFlight.economyCapacity)) * Number(departureFlight.economyBasePrice)) + 
                     Number(departureFlight.economyBasePrice)
                 );
                 returnUpdates.economyCurrentPrice = Math.round(
-                    ((newReturnEconomyCount / Number(returnFlight.economyCapacity)) * Number(returnFlight.economyBasePrice)) + 
+                    ((returnUpdates.economyBookedCount / Number(returnFlight.economyCapacity)) * Number(returnFlight.economyBasePrice)) + 
                     Number(returnFlight.economyBasePrice)
                 );
+
+                departureFlight.economyBookedCount = departureUpdates.economyBookedCount;
+                departureFlight.economyCurrentPrice = departureUpdates.economyCurrentPrice;
+                returnFlight.economyBookedCount = returnUpdates.economyBookedCount;
+                returnFlight.economyCurrentPrice = returnUpdates.economyCurrentPrice;
             } else {
-                // Update business seats and prices for both flights
-                const newDepartureBusinessCount = Number(departureFlight.businessBookedCount) + Number(noOfTraveller);
-                const newReturnBusinessCount = Number(returnFlight.businessBookedCount) + Number(noOfTraveller);
+                departureUpdates.businessBookedCount = Number(departureFlight.businessBookedCount) + Number(noOfTraveller);
+                returnUpdates.businessBookedCount = Number(returnFlight.businessBookedCount) + Number(noOfTraveller);
                 
-                departureUpdates.businessBookedCount = newDepartureBusinessCount;
-                returnUpdates.businessBookedCount = newReturnBusinessCount;
-                
-                // Recalculate business prices with rounding
                 departureUpdates.businessCurrentPrice = Math.round(
-                    ((newDepartureBusinessCount / Number(departureFlight.businessCapacity)) * Number(departureFlight.businessBasePrice)) + 
+                    ((departureUpdates.businessBookedCount / Number(departureFlight.businessCapacity)) * Number(departureFlight.businessBasePrice)) + 
                     Number(departureFlight.businessBasePrice)
                 );
                 returnUpdates.businessCurrentPrice = Math.round(
-                    ((newReturnBusinessCount / Number(returnFlight.businessCapacity)) * Number(returnFlight.businessBasePrice)) + 
+                    ((returnUpdates.businessBookedCount / Number(returnFlight.businessCapacity)) * Number(returnFlight.businessBasePrice)) + 
                     Number(returnFlight.businessBasePrice)
                 );
+
+                departureFlight.businessBookedCount = departureUpdates.businessBookedCount;
+                departureFlight.businessCurrentPrice = departureUpdates.businessCurrentPrice;
+                returnFlight.businessBookedCount = returnUpdates.businessBookedCount;
+                returnFlight.businessCurrentPrice = returnUpdates.businessCurrentPrice;
             }
 
-            // Update both flights
             await updateFlight(departureFlightId, departureUpdates);
             await updateFlight(returnFlightId, returnUpdates);
         }
 
-        // create booking
+        // 3. Calculate ticket price using updated prices
+        let ticketPrice;
+        if (tripType === "oneWay") {
+            ticketPrice = seatType === "1" ? 
+                Number(departureFlight.economyCurrentPrice) : 
+                Number(departureFlight.businessCurrentPrice);
+        } else {
+            const departurePrice = seatType === "1" ? 
+                Number(departureFlight.economyCurrentPrice) : 
+                Number(departureFlight.businessCurrentPrice);
+            const returnPrice = seatType === "1" ? 
+                Number(returnFlight.economyCurrentPrice) : 
+                Number(returnFlight.businessCurrentPrice);
+            ticketPrice = departurePrice + returnPrice;
+        }
+
+        // 4. Create tickets with updated flight data
+        let tickets = [];
+        let totalBookingPrice = 0;
+
+        for (let i = 1; i <= noOfTraveller; i++) {
+            const flyerName = document.getElementById(`nameInput${i}`).value;
+            const flyerEmail = document.getElementById(`emailInput${i}`).value;
+            const flyerAge = parseInt(document.getElementById(`ageInput${i}`).value);
+
+            const ticket = await addTicketToDB(
+                user,
+                departureFlight,
+                returnFlight,
+                flyerName,
+                flyerEmail,
+                flyerAge,
+                tripType,
+                seatType === "1" ? "economy" : "business",
+                ticketPrice
+            );
+
+            tickets.push({
+                ticketId: ticket.ticketId,
+                nameOfFlyer: flyerName,
+                ageOfFlyer: flyerAge,
+                emailOfFlyer: flyerEmail,
+                tripType,
+                seatType: seatType === "1" ? "economy" : "business",
+                ticketPrice
+            });
+
+            totalBookingPrice += ticketPrice;
+        }
+
+        // 5. Create booking with updated flight data
         const booking = await addBookingToDB(
-            userId,
-            departureFlightId,
-            returnFlightId,
-            ticketIdArray,
+            user,
+            departureFlight,
+            returnFlight,
+            tickets,
             tripType,
             totalBookingPrice,
             "confirmed"
         );
 
         clearCurrentFlightDetails();
-
         window.location.href = '/dashboards/user/bookings/bookings.html'
 
     } catch (error) {
-        alert(error.message)
+        alert(error.message);
+        console.error(error.message)
     }
 }
 

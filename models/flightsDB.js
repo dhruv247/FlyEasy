@@ -119,7 +119,7 @@ const updateFlight = async (flightId, updates) => {
         request.onsuccess = () => {
             const flight = request.result;
             if (!flight) return reject("Flight not found");
-            Object.assign(flight, updates, { updatedAt: new Date().toISOString().split("T")[0], changed: "Flight Times Changed" });
+            Object.assign(flight, updates, { updatedAt: new Date().toISOString().split("T")[0] });
             const updateRequest = store.put(flight);
             updateRequest.onsuccess = () => resolve(flight);
             updateRequest.onerror = () => reject(updateRequest.error);
