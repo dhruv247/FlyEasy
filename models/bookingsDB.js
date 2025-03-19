@@ -111,3 +111,39 @@ const updateBooking = async (bookingId, updates) => {
         request.onerror = () => reject(request.error);
     });
 };
+
+/**
+ * Gets all bookings for a specific departure flight
+ * @param {string} flightId 
+ * @returns array of booking objects (resolve) / error (reject)
+ */
+const getBookingsByDepartureFlightId = async (flightId) => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("bookings", "readonly");
+        const store = transaction.objectStore("bookings");
+        const index = store.index("departureFlightId");
+        const request = index.getAll(flightId);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+/**
+ * Gets all bookings for a specific return flight
+ * @param {string} flightId 
+ * @returns array of booking objects (resolve) / error (reject)
+ */
+const getBookingsByReturnFlightId = async (flightId) => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("bookings", "readonly");
+        const store = transaction.objectStore("bookings");
+        const index = store.index("returnFlightId");
+        const request = index.getAll(flightId);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};

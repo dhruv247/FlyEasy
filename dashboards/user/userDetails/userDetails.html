@@ -10,6 +10,8 @@
     <!-- DB files -->
     <script defer src="/models/db.js"></script>
     <script defer src="/models/usersDB.js"></script>
+    <script defer src="/models/ticketsDB.js"></script>
+    <script defer src="/models/bookingsDB.js"></script>
     <!-- JS File -->
     <script defer src="/localStorageOperations.js"></script>
     <script defer src="/loginRegister/auth.js"></script> 
@@ -37,10 +39,22 @@
                 <div class="col-1 col-md-4"></div>
             </div>
             <!-- Password Instruction Label -->
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-1 col-md-4"></div>
                 <div class="col-10 col-md-4">
-                    <p>Please enter these details to change password</p>
+                    <div class="text-start text-muted">
+                        <p class="mb-2">Please enter these details to change password:</p>
+                        <div class="small">
+                            New password must contain:
+                            <ul>
+                                <li>At least 8 characters</li>
+                                <li>One uppercase letter</li>
+                                <li>One lowercase letter</li>
+                                <li>One number</li>
+                                <li>One special character (@$!%*?&)</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-1 col-md-4"></div>
             </div>
@@ -48,7 +62,7 @@
             <div class="row mb-3">
                 <div class="col-1 col-md-4"></div>
                 <div class="col-10 col-md-4">
-                    <input type="password" name="oldPasswordInput" id="olPasswordInput" class="form-control" placeholder="Old Password">
+                    <input type="password" name="oldPasswordInput" id="oldPasswordInput" class="form-control" placeholder="Old Password">
                 </div>
                 <div class="col-1 col-md-4"></div>
             </div>

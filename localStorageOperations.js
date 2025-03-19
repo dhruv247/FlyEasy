@@ -165,6 +165,7 @@ function clearCurrentFlightDetails() {
     localStorage.removeItem("returnFlightId");
     localStorage.removeItem("travelClass");
     localStorage.removeItem("tripType");
+    localStorage.removeItem("returnDate");
 }
 
 /**

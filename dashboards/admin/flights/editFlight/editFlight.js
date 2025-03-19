@@ -61,6 +61,88 @@ async function loadEditFlightDetails() {
 }
 
 /**
+ * Updates flight details in related bookings and tickets
+ * @param {Object} updatedFlight - The flight object with updated details
+ */
+async function updateRelatedBookingsAndTickets(updatedFlight) {
+    try {
+        // Update bookings
+        const allBookings = await getAllBookings();
+        const relatedBookings = allBookings.filter(booking => 
+            (booking.departureFlight?.flightId === updatedFlight.flightId) || 
+            (booking.returnFlight?.flightId === updatedFlight.flightId)
+        );
+
+        // Update each related booking
+        for (const booking of relatedBookings) {
+            const updates = {};
+            if (booking.departureFlight?.flightId === updatedFlight.flightId) {
+                updates.departureFlight = updatedFlight;
+            }
+            if (booking.returnFlight?.flightId === updatedFlight.flightId) {
+                updates.returnFlight = updatedFlight;
+            }
+            await updateBooking(booking.bookingId, updates);
+        }
+
+        // Get tickets directly using the flight ID
+        const departureTickets = await getTicketsByDepartureFlightId(updatedFlight.flightId);
+        const returnTickets = await getTicketsByReturnFlightId(updatedFlight.flightId);
+
+        // Update departure tickets
+        for (const ticket of departureTickets) {
+            await updateTicket(ticket.ticketId, {
+                departureFlight: updatedFlight
+            });
+        }
+
+        // Update return tickets
+        for (const ticket of returnTickets) {
+            await updateTicket(ticket.ticketId, {
+                returnFlight: updatedFlight
+            });
+        }
+
+        console.log(`Updated ${departureTickets.length} departure tickets and ${returnTickets.length} return tickets`);
+    } catch (error) {
+        console.error("Error updating related bookings and tickets:", error);
+        throw error;
+    }
+}
+
+/**
+ * Validates that arrival time is after departure time
+ * @param {string} departureDate 
+ * @param {string} departureTime 
+ * @param {string} arrivalDate 
+ * @param {string} arrivalTime 
+ * @throws {Error} if arrival is not after departure
+ */
+function validateFlightTimes(departureDate, departureTime, arrivalDate, arrivalTime) {
+    const departureDateTime = new Date(`${departureDate}T${departureTime}`);
+    const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
+    
+    if (arrivalDateTime <= departureDateTime) {
+        throw new Error("Arrival time must be after departure time");
+    }
+
+    // Calculate duration in hours
+    const durationMs = arrivalDateTime - departureDateTime;
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    
+    // Validate reasonable flight duration (e.g., not more than 20 hours for domestic flights)
+    if (hours > 20) {
+        throw new Error("Flight duration seems unusually long. Please check the times.");
+    }
+    
+    return {
+        durationMs,
+        departureDateTime,
+        arrivalDateTime
+    };
+}
+
+/**
  * change flight times and duration and update flight using function flightsDB.js
  * @param {*} event - form submission event
  */
@@ -71,42 +153,49 @@ async function changeFlightDetails(event) {
         const formData = new FormData(form);
 
         const departureDate = formData.get("departureDate");
-        const arrivalDate = formData.get("arrivalDate")
+        const arrivalDate = formData.get("arrivalDate");
         const newDepartureTime = formData.get("departureTime");
         const newArrivalTime = formData.get("arrivalTime");
-        const newDepartureDateTime = new Date(`${departureDate}T${newDepartureTime}`);
-        const newArrivalDateTime = new Date(`${arrivalDate}T${newArrivalTime}`);
 
-        // Calculate duration in milliseconds
-        const durationMs = newArrivalDateTime - newDepartureDateTime;
+        // Validate times and get duration
+        const { durationMs, departureDateTime, arrivalDateTime } = validateFlightTimes(
+            departureDate,
+            newDepartureTime,
+            arrivalDate,
+            newArrivalTime
+        );
 
-        // Convert to hours and minutes
+        // Calculate hours and minutes for duration
         const hours = Math.floor(durationMs / (1000 * 60 * 60));
         const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
 
         // Format duration as "Xh Ym"
         const newDuration = `${hours}:${minutes}`;
 
-        if (newArrivalDateTime <= newDepartureDateTime) {
-            throw new Error("Arrival date and time must be after departure date and time!");
-        } else {
-            const updates = {
-                departureTime: newDepartureTime,
-                arrivalTime: newArrivalTime,
-                duration: newDuration,
-                changed: "Flight Times Changed"
-            }
-            const flightId = localStorage.getItem("flightId");
-            const updatedFlight = await updateFlight(flightId, updates);
-            if (updatedFlight) {
+        const updates = {
+            departureTime: newDepartureTime,
+            arrivalTime: newArrivalTime,
+            duration: newDuration,
+            changed: "Flight Times Changed"
+        };
+
+        const flightId = localStorage.getItem("flightId");
+        const updatedFlight = await updateFlight(flightId, updates);
+        
+        if (updatedFlight) {
+            try {
+                await updateRelatedBookingsAndTickets(updatedFlight);
                 alert("Flight times changed successfully!")
                 window.location.href = '../flights.html'
-            } else {
-                throw new Error("Flight times could not be changed! Please try again.")
+            } catch (updateError) {
+                console.error("Error updating related records:", updateError);
+                alert("Flight updated but there was an error updating related bookings and tickets. Please contact support.");
+                window.location.href = '../flights.html'
             }
+        } else {
+            throw new Error("Flight times could not be changed! Please try again.")
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error updating flight:", error);
         alert(error.message);
     }

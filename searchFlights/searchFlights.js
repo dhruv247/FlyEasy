@@ -61,6 +61,41 @@ function loadSearchDetails() {
 }
 
 /**
+ * Validates flight dates
+ * @param {string} departureDate - Selected departure date
+ * @param {string} returnDate - Selected return date (optional)
+ * @returns {Object} - Validation result with status and message
+ */
+function validateDates(departureDate, returnDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const departureDateObj = new Date(departureDate);
+    
+    if (departureDateObj < today) {
+        return {
+            isValid: false,
+            message: "Departure date must be in the future"
+        };
+    }
+    
+    if (returnDate) {
+        const returnDateObj = new Date(returnDate);
+        if (returnDateObj < departureDateObj) {
+            return {
+                isValid: false,
+                message: "Return date cannot be before departure date"
+            };
+        }
+    }
+    
+    return {
+        isValid: true,
+        message: ""
+    };
+}
+
+/**
  * Searches Flights based on input fields
  * @param {*} event - form submission
  * @description
@@ -79,12 +114,27 @@ async function searchFlights(event) {
     // Get form data
     const form = event.target;
     const formData = new FormData(form);
+    
     // Get all required fields
+    const departureDate = formData.get("departureDate");
+    const returnDate = formData.get("returnDate");
+    
+    // Validate dates
+    const dateValidation = validateDates(departureDate, returnDate);
+    if (!dateValidation.isValid) {
+        const flightSection = document.getElementById("sampleFlights");
+        flightSection.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                ${dateValidation.message}
+            </div>
+        `;
+        return;
+    }
+    
     const departurePlace = formData.get("flightFrom").toLowerCase().trim();
     const arrivalPlace = formData.get("flightTo").toLowerCase().trim();
-    const departureDate = formData.get("departureDate");
     const numberOfPassengers = Number(formData.get("noOfTraveller"));
-    const travelClass = formData.get("travelClass"); // "1" for Economy, "2" for Business
+    const travelClass = formData.get("travelClass");
     const flights = await getAllFlights();
     searchedFlights = flights.filter(flight => {
         let matchesSearch = true;

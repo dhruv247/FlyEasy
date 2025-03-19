@@ -24,11 +24,16 @@ function loadSearchDetails() {
         const departureDate = document.getElementById("departureDate");
         departureDate.value = searchData.departureDate;
         departureDate.setAttribute("readonly", "readonly");
+        
+        // Set minimum date for return date input
+        const returnDate = document.getElementById("returnDate");
+        returnDate.setAttribute("min", searchData.departureDate);
     }
     if (searchData.returnDate) {
-        document.getElementById("returnDate").value = searchData.returnDate;
-        document.getElementById("returnDate").classList.remove("d-none");
-        document.getElementById("returnDate").setAttribute("required", "required");
+        const returnDate = document.getElementById("returnDate");
+        returnDate.value = searchData.returnDate;
+        returnDate.classList.remove("d-none");
+        returnDate.setAttribute("required", "required");
     }
     if (searchData.noOfTraveller) {
         const noOfTraveller = document.getElementById("noOfTraveller");

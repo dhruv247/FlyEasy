@@ -12,6 +12,10 @@ function saveSearchData(event) {
     try {
         if (getLoginStatus()) {
             event.preventDefault();
+            // Add date validation check
+            if (!validateDates()) {
+                return;
+            }
             const form = event.target;
             const formData = new FormData(form);
             saveFlightSearchData(formData);
@@ -113,6 +117,35 @@ function loginDashboardButtonSwap() {
         loginButton.classList.add("d-none");
         userDashboardButton.classList.remove("d-none");
     }
+}
+
+/**
+ * Validates dates to ensure they are in the future and return date is after departure
+ * @returns {boolean} true if dates are valid, false otherwise
+ */
+function validateDates() {
+    const departureDate = new Date(document.getElementById("departureDate").value);
+    const returnDate = new Date(document.getElementById("returnDate").value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for fair comparison
+
+    if (departureDate < today) {
+        alert("Departure date must be in the future");
+        return false;
+    }
+
+    if (document.getElementById("roundTrip").checked) {
+        if (returnDate < today) {
+            alert("Return date must be in the future");
+            return false;
+        }
+        if (returnDate < departureDate) {
+            alert("Return date must be after departure date");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**

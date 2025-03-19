@@ -16,6 +16,38 @@ async function loadUserDetails() {
 }
 
 /**
+ * Validates email format
+ * @param {string} email 
+ * @returns {boolean}
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+/**
+ * Validates username requirements
+ * @param {string} username 
+ * @returns {boolean}
+ */
+function isValidUsername(username) {
+    // Username should be 3-20 characters, alphanumeric and underscores only
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    return usernameRegex.test(username);
+}
+
+/**
+ * Validates password strength
+ * @param {string} password 
+ * @returns {boolean}
+ */
+function isValidPassword(password) {
+    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+}
+
+/**
  * This function is used by user to change login details
  * @param {*} event - form submission event
  * @description
@@ -25,54 +57,119 @@ async function loadUserDetails() {
  * 3. Checks that the new password is same as confirmation password
  * 4. Checks that the password fields are not empty
  */
+async function validateInputs(email, username, oldPassword, newPassword, confirmPassword) {
+    // Email validation
+    if (!isValidEmail(email)) {
+        throw new Error("Please enter a valid email address");
+    }
+
+    // Username validation
+    if (!isValidUsername(username)) {
+        throw new Error("Username must be 3-20 characters long and can only contain letters, numbers, and underscores");
+    }
+
+    // Password validation (if changing password)
+    if (oldPassword) {
+        if (!isValidPassword(newPassword)) {
+            throw new Error("New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character");
+        }
+        if (newPassword !== confirmPassword) {
+            throw new Error("Passwords don't match");
+        }
+    }
+}
+
+/**
+ * Updates user property in tickets and bookings
+ * @param {*} userId 
+ * @param {*} userProperty 
+ */
+async function updateUserReferences(userId, userProperty) {
+    try {
+        if (!userProperty) {
+            throw new Error("Error getting the updated user!");
+        }
+
+        const updates = {
+            user: {
+                userId: userProperty.userId,
+                username: userProperty.username,
+                email: userProperty.email
+            }
+        };
+
+        const userTickets = await getTicketsByUserId(userId);
+        const userBookings = await getBookingsByUserId(userId);
+
+        const updatePromises = [
+            ...userTickets.map(ticket => 
+                updateTicket(ticket.ticketId, updates)
+                    .catch(err => console.error(`Failed to update ticket ${ticket.ticketId}:`, err))
+            ),
+            ...userBookings.map(booking => 
+                updateBooking(booking.bookingId, updates)
+                    .catch(err => console.error(`Failed to update booking ${booking.bookingId}:`, err))
+            )
+        ];
+
+        await Promise.all(updatePromises);
+    } catch (error) {
+        console.error("Error updating user references:", error);
+        throw error;
+    }
+}
+
+/**
+ * change the details for user
+ * @param {*} event 
+ * @description
+ * Uses the validInput function validate fields
+ */
 async function changeUserDetails(event) {
     try {
-        const userId = getUserId();
-        const user = await getUserByUserId(userId);
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-        const email = formData.get("emailInput");
-        const username = formData.get("usernameInput");
-        const oldPassword = formData.get("oldPasswordInput");
-        const newPasswordInput = formData.get("newPasswordInput");
-        const confirmPasswordInput = formData.get("confirmPasswordInput");
-        if (oldPassword) {
-            if (hashPassword(oldPassword) === user.password) {
-                if (oldPassword !== newPasswordInput) {
-                    if (newPasswordInput === confirmPasswordInput) {
-                        if (newPasswordInput.trim() !== "") {
-                            let updatedUserDetails = await updateUser(userId, { email: email, username: username, password: hashPassword(newPasswordInput)})
-                            if (updatedUserDetails) {
-                                alert("Details changed successfully!");
-                                window.location.href = '../userDashboard.html'
-                            } else {
-                                throw new Error("Details not changed! Please try again.")
-                            }
-                        } else {
-                            throw new Error(" New Password cannot be empty")
-                        }
-                    } else {
-                        throw new Error("New Passwords don't match")
-                    }
-                } else {
-                    throw new Error("New Password cannot be same as old password")
-                }
-            } else {
-                throw new Error("Incorrect Password!")
-            }
-        } else {
-            const updatedUserDetails = await updateUser(userId, { email: email, username: username })
         
-            if (updatedUserDetails) {
-                alert("Details changed successfully!");
-                window.location.href = '../userDashboard.html'
-            } else {
-                throw new Error("Details not changed! Please try again.")
+        const email = formData.get("emailInput").trim();
+        const username = formData.get("usernameInput").trim();
+        const oldPassword = formData.get("oldPasswordInput");
+        const newPassword = formData.get("newPasswordInput");
+        const confirmPassword = formData.get("confirmPasswordInput");
+
+        const userId = getUserId();
+        const user = await getUserByUserId(userId);
+
+        // Validate inputs
+        await validateInputs(email, username, oldPassword, newPassword, confirmPassword);
+
+        // Prepare updates object
+        const updates = { email, username };
+        
+        if (oldPassword) {
+            if (hashPassword(oldPassword) !== user.password) {
+                throw new Error("Incorrect current password");
             }
+            if (oldPassword === newPassword) {
+                throw new Error("New password must be different from current password");
+            }
+            updates.password = hashPassword(newPassword);
         }
+
+        // Update user in a transaction if possible
+        const updatedUserDetails = await updateUser(userId, updates);
+        
+        if (!updatedUserDetails) {
+            throw new Error("Failed to update user details");
+        }
+
+        // Update references
+        await updateUserReferences(userId, updatedUserDetails);
+
+        alert("Details changed successfully!");
+        window.location.href = '../userDashboard.html';
     } catch (error) {
-        alert(error.message)
+        alert(error.message);
     }
 }
 

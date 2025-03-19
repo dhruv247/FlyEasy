@@ -35,12 +35,16 @@ const openDB = () => {
             if (!db.objectStoreNames.contains("tickets")) {
                 const ticketStore = db.createObjectStore("tickets", { keyPath: "ticketId" });
                 ticketStore.createIndex("userId", "user.userId", { unique: false });
+                ticketStore.createIndex("departureFlightId", "departureFlight.flightId", { unique: false });
+                ticketStore.createIndex("returnFlightId", "returnFlight.flightId", { unique: false });
             }
 
             // Bookings Object Store
             if (!db.objectStoreNames.contains("bookings")) {
                 const bookingStore = db.createObjectStore("bookings", { keyPath: "bookingId" });
                 bookingStore.createIndex("userId", "user.userId", { unique: false });
+                bookingStore.createIndex("departureFlightId", "departureFlight.flightId", { unique: false });
+                bookingStore.createIndex("returnFlightId", "returnFlight.flightId", { unique: false });
             }
         };
         request.onsuccess = (event) => resolve(event.target.result);

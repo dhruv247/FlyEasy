@@ -23,7 +23,10 @@ function createFlyerForms() {
                 <div class="row mb-3">
                     <div class="col-1 col-md-4"></div>
                     <div class="col-10 col-md-4">
-                        <input type="email" class="form-control" name="emailInput${i}" id="emailInput${i}" placeholder="Email" required>
+                        <input type="email" class="form-control" name="emailInput${i}" id="emailInput${i}" 
+                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                            title="Please enter a valid email address"
+                            placeholder="Email" required>
                     </div>
                     <div class="col-1 col-md-4"></div>
                 </div>
@@ -31,7 +34,10 @@ function createFlyerForms() {
                 <div class="row mb-3">
                     <div class="col-1 col-md-4"></div>
                     <div class="col-10 col-md-4">
-                        <input type="number" name="ageInput${i}" id="ageInput${i}" class="form-control" placeholder="Age" required>
+                        <input type="number" name="ageInput${i}" id="ageInput${i}" class="form-control" 
+                            min="1" max="120" step="1"
+                            title="Age must be between 1 and 120 years"
+                            placeholder="Age" required>
                     </div>
                     <div class="col-1 col-md-4"></div>
                 </div>
@@ -58,6 +64,21 @@ function createFlyerForms() {
 async function createBooking(event) {
     try {
         event.preventDefault();
+
+        // Add validation before processing
+        for (let i = 1; i <= noOfTraveller; i++) {
+            const age = parseInt(document.getElementById(`ageInput${i}`).value);
+            const email = document.getElementById(`emailInput${i}`).value;
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+            if (age < 1 || age > 120 || !Number.isInteger(age)) {
+                throw new Error(`Invalid age for Flyer ${i}. Age must be between 1 and 120 years.`);
+            }
+
+            if (!emailRegex.test(email)) {
+                throw new Error(`Invalid email format for Flyer ${i}.`);
+            }
+        }
 
         // 1. Get all initial data
         const userId = getUserId();

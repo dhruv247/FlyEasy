@@ -10,29 +10,9 @@ let travelClass;
 /**
  * dynamically add event listeners to flight cards
  * @description
- * 1. Add delete button event listeners
- * 2. Add edit button event listeners
+ * 1. Add edit button event listeners
  */
 function attachEventListeners() {
-    const deleteButtons = document.querySelectorAll(".deleteFlightBtn");
-    deleteButtons.forEach(button => {
-        button.addEventListener("click", async (e) => {
-            if (confirm("Are you sure you want to delete this flight?")) {
-                const flightId = e.target.dataset.flightId;
-                try {
-                    await deleteFlight(flightId);
-                    const flightRow = e.target.closest(".row");
-                    if (flightRow) {
-                        flightRow.remove();
-                    }
-                } catch (error) {
-                    console.error("Error deleting flight:", error);
-                    alert("Failed to delete flight. Please try again.");
-                }
-            }
-        });
-    });
-
     const editButtons = document.querySelectorAll(".editFlightBtn");
     editButtons.forEach(button => {
         button.addEventListener("click", async (e) => {
@@ -112,7 +92,6 @@ function flightDOMStructure(flights) {
                     </div>
                     <div class="col-12 col-md-2 d-flex gap-2 justify-content-center">
                         <button class="btn btn-outline-primary editFlightBtn" data-flight-id="${flight.flightId}">Edit</button>
-                        <button class="btn btn-outline-danger deleteFlightBtn" data-flight-id="${flight.flightId}">Delete</button>
                     </div>
         `;
         flightSection.appendChild(newFlight);
