@@ -1,5 +1,6 @@
 /**
- * Loads flight details using flight Id from local Storage
+ * Loads flight details from indexedDB using flight Id from local Storage
+ * Keeps all fields disabled except deprture time and arrival time
  */
 async function loadEditFlightDetails() {
     try {
@@ -63,50 +64,50 @@ async function loadEditFlightDetails() {
 /**
  * Updates flight details in related bookings and tickets
  * @param {Object} updatedFlight - The flight object with updated details
+ * @description
+ * 
  */
 async function updateRelatedBookingsAndTickets(updatedFlight) {
     try {
-        // Update bookings
-        const allBookings = await getAllBookings();
-        const relatedBookings = allBookings.filter(booking => 
-            (booking.departureFlight?.flightId === updatedFlight.flightId) || 
-            (booking.returnFlight?.flightId === updatedFlight.flightId)
-        );
+        // 1. Get related bookings using functions from bookingsDB.js which uses flight ids
+        const departureBookings = await getBookingsByDepartureFlightId(updatedFlight.flightId);
+        const returnBookings = await getBookingsByReturnFlightId(updatedFlight.flightId);
 
-        // Update each related booking
-        for (const booking of relatedBookings) {
-            const updates = {};
-            if (booking.departureFlight?.flightId === updatedFlight.flightId) {
-                updates.departureFlight = updatedFlight;
-            }
-            if (booking.returnFlight?.flightId === updatedFlight.flightId) {
-                updates.returnFlight = updatedFlight;
-            }
-            await updateBooking(booking.bookingId, updates);
+        // 2. Update departure bookings
+        for (const booking of departureBookings) {
+            await updateBooking(booking.bookingId, {
+                departureFlight: updatedFlight
+            });
         }
 
-        // Get tickets directly using the flight ID
+        // 3. Update return bookings
+        for (const booking of returnBookings) {
+            await updateBooking(booking.bookingId, {
+                returnFlight: updatedFlight
+            });
+        }
+
+        // 4. Use custom functions in ticketsDB.js to get tickets directly using the flight ID
         const departureTickets = await getTicketsByDepartureFlightId(updatedFlight.flightId);
         const returnTickets = await getTicketsByReturnFlightId(updatedFlight.flightId);
 
-        // Update departure tickets
+        // 5. Update departure tickets
         for (const ticket of departureTickets) {
             await updateTicket(ticket.ticketId, {
                 departureFlight: updatedFlight
             });
         }
 
-        // Update return tickets
+        // 6. Update return tickets
         for (const ticket of returnTickets) {
             await updateTicket(ticket.ticketId, {
                 returnFlight: updatedFlight
             });
         }
 
-        console.log(`Updated ${departureTickets.length} departure tickets and ${returnTickets.length} return tickets`);
     } catch (error) {
+        // We are using a different error throwing format here as this is a behind the scenes operation
         console.error("Error updating related bookings and tickets:", error);
-        throw error;
     }
 }
 
@@ -119,6 +120,7 @@ async function updateRelatedBookingsAndTickets(updatedFlight) {
  * @throws {Error} if arrival is not after departure
  */
 function validateFlightTimes(departureDate, departureTime, arrivalDate, arrivalTime) {
+    // create a combined departure date and time
     const departureDateTime = new Date(`${departureDate}T${departureTime}`);
     const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
     
@@ -130,9 +132,12 @@ function validateFlightTimes(departureDate, departureTime, arrivalDate, arrivalT
     const durationMs = arrivalDateTime - departureDateTime;
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     
-    // Validate reasonable flight duration (e.g., not more than 20 hours for domestic flights)
+    // Validate reasonable flight duration (e.g., not more than 20 hours for flights and not less than 1 hour)
     if (hours > 20) {
         throw new Error("Flight duration seems unusually long. Please check the times.");
+    }
+    if (hours < 1) {
+        throw new Error("Flight duration seems unusually short. Please check the times.")
     }
     
     return {
@@ -143,7 +148,7 @@ function validateFlightTimes(departureDate, departureTime, arrivalDate, arrivalT
 }
 
 /**
- * change flight times and duration and update flight using function flightsDB.js
+ * change flight times and duration and update flight using function in flightsDB.js
  * @param {*} event - form submission event
  */
 async function changeFlightDetails(event) {
@@ -152,12 +157,13 @@ async function changeFlightDetails(event) {
         const form = event.target;
         const formData = new FormData(form);
 
+        // 1. get form data
         const departureDate = formData.get("departureDate");
         const arrivalDate = formData.get("arrivalDate");
         const newDepartureTime = formData.get("departureTime");
         const newArrivalTime = formData.get("arrivalTime");
 
-        // Validate times and get duration
+        // 2. Validate times
         const { durationMs, departureDateTime, arrivalDateTime } = validateFlightTimes(
             departureDate,
             newDepartureTime,
@@ -165,13 +171,13 @@ async function changeFlightDetails(event) {
             newArrivalTime
         );
 
-        // Calculate hours and minutes for duration
+        // 3. Calculate hours and minutes for duration
         const hours = Math.floor(durationMs / (1000 * 60 * 60));
         const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        // Format duration as "Xh Ym"
         const newDuration = `${hours}:${minutes}`;
 
+        // 4. Update flight object
         const updates = {
             departureTime: newDepartureTime,
             arrivalTime: newArrivalTime,
@@ -182,6 +188,7 @@ async function changeFlightDetails(event) {
         const flightId = localStorage.getItem("flightId");
         const updatedFlight = await updateFlight(flightId, updates);
         
+        // 5. Update related tickets and bookings
         if (updatedFlight) {
             try {
                 await updateRelatedBookingsAndTickets(updatedFlight);

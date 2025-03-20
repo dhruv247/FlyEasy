@@ -275,6 +275,20 @@ function createOneWayBooking(booking) {
             </div>`;
     }
 
+    /**
+         * Custom Time format
+         * @description
+         * 1. This is because duration like 2:03 are being printed as 2:3 which is confusing.
+        */
+    const duration = booking.departureFlight.duration;
+    const durationArray = duration.split(":")
+    let customDuration;
+    if (durationArray[1] < 10) {
+        customDuration = `${durationArray[0]}:0${durationArray[1]}`
+    } else {
+        customDuration = duration
+    }
+
     // HTML code for one way bookings
     const newBooking = document.createElement("div");
     newBooking.className = `border border-subtle rounded p-2 m-2 row ${booking.status === "cancelled" ? "opacity-75" : ""}`
@@ -302,7 +316,7 @@ function createOneWayBooking(booking) {
                             </div>
                         </div>
                         <div class="col-12 col-md-1">
-                            <p>${booking.departureFlight.duration}</p>
+                            <p>${customDuration}</p>
                         </div>
                         <div class="col-12 col-md-1">
                             <p>${booking.departureFlight.planeName}</p>
@@ -353,6 +367,34 @@ function createRoundTripBooking(booking) {
         travelClass = "Business";
     }
 
+    /**
+         * Custom Time format for departure duration
+         * @description
+         * 1. This is because duration like 2:03 are being printed as 2:3 which is confusing.
+        */
+    const departureDuration = booking.departureFlight.duration;
+    const departureDurationArray = departureDuration.split(":")
+    let customDepartureDuration;
+    if (departureDurationArray[1] < 10) {
+        customDepartureDuration = `${departureDurationArray[0]}:0${departureDurationArray[1]}`
+    } else {
+        customDepartureDuration = departureDuration
+    }
+
+    /**
+         * Custom time format for return duration
+         * @description
+         * 1. This is because duration like 2:03 are being printed as 2:3 which is confusing.
+        */
+    const returnDuration = booking.returnFlight.duration;
+    const returnDurationArray = returnDuration.split(":")
+    let customReturnDuration;
+    if (returnDurationArray[1] < 10) {
+        customReturnDuration = `${returnDurationArray[0]}:0${returnDurationArray[1]}`
+    } else {
+        customReturnDuration = returnDuration
+    }
+
     // Code options for the booking status (confirmed or cancelled)
     const bookingArea = document.getElementById('sampleBookings');
     let actionButtons;
@@ -397,7 +439,7 @@ function createRoundTripBooking(booking) {
                             </div>
                         </div>
                         <div class="col-12 col-md-1">
-                            <p>${booking.departureFlight.duration}</p>
+                            <p>${customDepartureDuration}</p>
                         </div>
                         <div class="col-12 col-md-1">
                             <p>${booking.departureFlight.planeName}</p>
@@ -434,7 +476,7 @@ function createRoundTripBooking(booking) {
                             </div>
                         </div>
                         <div class="col-12 col-md-1">
-                            <p>${booking.returnFlight.duration}</p>
+                            <p>${customReturnDuration}</p>
                         </div>
                         <div class="col-12 col-md-1">
                             <p>${booking.returnFlight.planeName}</p>

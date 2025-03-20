@@ -3,29 +3,34 @@
  * @param {*} event - form submission event
  * @description
  * 1. gets the data add flight form
- * 2. use addFlightToDB function from flightDB.js to add a flight to db
- * 3. reset (clear form after adding flight)
+ * 2. Add all validations
+ * 3. use addFlightToDB function from flightDB.js to add a flight to db
+ * 4. Redirect to flights.html
  */
 async function addFlight(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
+
+    // 1. Gets the data from add flight form
     const flightNo = formData.get('flightNo');
     const planeName = formData.get('planeName');
     const airline = formData.get('airline');
     const departurePlace = formData.get('departurePlace');
     const departureDate = formData.get('departureDate');
     const departureTime = formData.get('departureTime');
+    // create a combined date time object for comaprision
     const departureDateTime = new Date(`${departureDate}T${departureTime}`);
     const arrivalPlace = formData.get('arrivalPlace');
     const arrivalDate = formData.get('arrivalDate');
     const arrivalTime = formData.get('arrivalTime');
+    // create a combined date time object for comaprision
     const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
     // Calculate duration in milliseconds
     const durationMs = arrivalDateTime - departureDateTime;
     // Convert to hours and minutes
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    // Format duration as "Xh Ym"
+    // Format duration as "h:m"
     const duration = `${hours}:${minutes}`;
     const economyCapacity = Number(formData.get('economyCapacity'));
     let economyBookedCount = 0;
@@ -38,6 +43,9 @@ async function addFlight(event) {
     const changed = "No Changes";
 
     try {
+
+        // 2. Validations
+
         // Get current date and set time to start of day for comparison
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0);
@@ -102,11 +110,13 @@ async function addFlight(event) {
             throw new Error("Business class price must be higher than economy class price.");
         }
 
+        // Checks current flight number doesn't exist
         const existingFlight = await getFlightsByFlightNo(flightNo);
         if (existingFlight) {
             throw new Error(`Flight number ${flightNo} already exists. Please use a different flight number.`);
         }
 
+        // Checks departure place != arrival place
         if (departurePlace === arrivalPlace) {
             throw new Error("Departure and Arrival city cannot be same!")
         }
@@ -116,6 +126,7 @@ async function addFlight(event) {
             throw new Error("Arrival date and time must be after departure date and time!");
         }
 
+        // 3. Add flight to DB
         const flight = await addFlightToDB(
             flightNo,
             planeName,
@@ -139,7 +150,7 @@ async function addFlight(event) {
         );
         
         alert("Flight added successfully");
-        // Redirect after successful addition
+        // 4. Redirect after successful addition
         window.location.href = "/dashboards/admin/flights/flights.html";
     } catch (error) {
         alert(error.message);

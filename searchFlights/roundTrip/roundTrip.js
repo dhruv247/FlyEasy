@@ -4,8 +4,8 @@ let searchedFlights = [];
 /**
  * Loads search data from local storage to maintain search field input persistence
  * @description
- * 1. This Function uses trip type to decide which fields to show
- * 2. Loads data from local storage for the fields that are needed
+ * 1. Loads data from local storage for the fields that are needed
+ * 2. Also disables all fields except return date
  */
 function loadSearchDetails() {
     const searchData = getFlightSearchData();
@@ -51,9 +51,9 @@ function loadSearchDetails() {
  * Searches Flights based on input fields
  * @param {*} event - form submission
  * @description
- * 1. Saves fields to local storage
+ * 1. Saves only return date to local storage
  * 2. Gets form fields
- * 3. Starts searching for flights stored indexedDB and keeps only flights with matches
+ * 3. Starts searching for flights stored in indexedDB and keeps only flights with matches
  */
 async function searchFlights(event) {
     event.preventDefault();
@@ -107,6 +107,7 @@ async function searchFlights(event) {
 
 /**
  * Event listeners for select flight
+ * This function has been copies from searchFlights.js and not been edited so there is redundant code checking for oneWay flights which is not causing any issues
  */
 function attachEventListeners() {
     const selectFlightButtons = document.querySelectorAll(".selectFlightBtn");
@@ -139,6 +140,21 @@ function flightDOMStructure(flights) {
     flightSection.innerHTML = "";
     const searchData = getFlightSearchData();
     for (const flight of flights) {
+
+        /**
+         * Custom Time format
+         * @description
+         * 1. This is because duration like 2:03 are being printed as 2:3 which is confusing.
+        */
+        const duration = flight.duration;
+        const durationArray = duration.split(":")
+        let customDuration;
+        if (durationArray[1] < 10) {
+            customDuration = `${durationArray[0]}:0${durationArray[1]}`
+        } else {
+            customDuration = duration
+        }
+
         const currentTicketPrice = searchData.travelClass === "1" ? flight.economyCurrentPrice * Number(searchData.noOfTraveller) : flight.businessCurrentPrice * Number(searchData.noOfTraveller);
         const newFlight = document.createElement("div");
         newFlight.className = "row border border-subtle rounded m-0 mb-3 py-2 align-items-center";
@@ -166,7 +182,7 @@ function flightDOMStructure(flights) {
                         </div>
                     </div>
                     <div class="col-12 col-md-2">
-                        <p>${flight.duration}</p>
+                        <p>${customDuration}</p>
                     </div>
                     <div class="col-12 col-md-2">
                         <p>₹ <span>${currentTicketPrice}</span></p>

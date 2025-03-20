@@ -4,7 +4,7 @@
  * @param {*} email 
  * @param {*} password 
  * @param {*} userType 
- * @returns user object (resolve) / error (reject)
+ * @returns user (resolve) / error (reject)
  */
 const addUserToDB = async (username, email, password, userType) => {
     const db = await openDB();
@@ -99,7 +99,7 @@ const getUserByUsername = async (username) => {
  * @param {*} updates 
  * @description
  * 1. gets user by userId
- * 2. updates only select fields
+ * 2. updates only select fields (updatedAt changed automatically)
  * 3. puts the user into indexedDB
  * @returns user (resolve) / error (reject)
  */
@@ -111,7 +111,9 @@ const updateUser = async (userId, updates) => {
         const request = store.get(userId);
         request.onsuccess = () => {
             const user = request.result;
-            if (!user) return reject("User not found");
+            if (!user) {
+                return reject("User not found");
+            }
             Object.assign(user, updates, { updatedAt: new Date().toISOString().split("T")[0] });
             const updateRequest = store.put(user);
             updateRequest.onsuccess = () => resolve(user);
@@ -125,6 +127,9 @@ const updateUser = async (userId, updates) => {
  * Deletes user by userID
  * @param {*} userId
  * @returns user (resolve) / error (reject)
+ * @description
+ * This function is now redundant as delete users options has been removed
+ * Only being kept for adding this feature in next iteration
  */
 const deleteUser = async (userId) => {
     const db = await openDB();

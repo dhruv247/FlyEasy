@@ -89,30 +89,6 @@ const getBookingByBookingId = async (bookingId) => {
 };
 
 /**
- * Updates booking using bookingId (unique key)
- * @param {*} bookingId 
- * @param {*} updates 
- * @returns booking (resolve) / error (reject)
- */
-const updateBooking = async (bookingId, updates) => {
-    const db = await openDB();
-    return new Promise(async (resolve, reject) => {
-        const transaction = db.transaction("bookings", "readwrite");
-        const store = transaction.objectStore("bookings");
-        const request = store.get(bookingId);
-        request.onsuccess = () => {
-            const booking = request.result;
-            if (!booking) return reject("Booking not found");
-            Object.assign(booking, updates, { updatedAt: new Date().toISOString().split("T")[0] });
-            const updateRequest = store.put(booking);
-            updateRequest.onsuccess = () => resolve(booking);
-            updateRequest.onerror = () => reject(updateRequest.error);
-        };
-        request.onerror = () => reject(request.error);
-    });
-};
-
-/**
  * Gets all bookings for a specific departure flight
  * @param {string} flightId 
  * @returns array of booking objects (resolve) / error (reject)
@@ -144,6 +120,32 @@ const getBookingsByReturnFlightId = async (flightId) => {
         const request = index.getAll(flightId);
         
         request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+/**
+ * Updates booking using bookingId (unique key)
+ * @param {*} bookingId 
+ * @param {*} updates 
+ * @returns booking (resolve) / error (reject)
+ */
+const updateBooking = async (bookingId, updates) => {
+    const db = await openDB();
+    return new Promise(async (resolve, reject) => {
+        const transaction = db.transaction("bookings", "readwrite");
+        const store = transaction.objectStore("bookings");
+        const request = store.get(bookingId);
+        request.onsuccess = () => {
+            const booking = request.result;
+            if (!booking) {
+                return reject("Booking not found");
+            }
+            Object.assign(booking, updates, { updatedAt: new Date().toISOString().split("T")[0] });
+            const updateRequest = store.put(booking);
+            updateRequest.onsuccess = () => resolve(booking);
+            updateRequest.onerror = () => reject(updateRequest.error);
+        };
         request.onerror = () => reject(request.error);
     });
 };

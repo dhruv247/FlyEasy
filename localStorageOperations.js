@@ -16,7 +16,7 @@ function getUserType() {
 }
 
 /**
- * Gets user ID from localStorage
+ * Gets user ID
  * @returns {string} User ID
  */
 function getUserId() {
@@ -66,7 +66,7 @@ function saveFlightSearchData(formData) {
     // Trip Type
     const tripType = formData.get("tripType");
     localStorage.setItem("tripType", tripType);
-    // return date only if round trip
+    // return date only if round trip (checks by making sure return date field's class doesn't have d-none)
     if (tripType === "roundTrip" && !document.getElementById("returnDate").classList.contains("d-none")) {
         localStorage.setItem("returnDate", formData.get("returnDate"));
     } else {

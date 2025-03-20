@@ -42,20 +42,14 @@ function isValidUsername(username) {
  * @returns {boolean}
  */
 function isValidPassword(password) {
-    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+    // At least 8 characters, 1 Uppercase, 1 lowercase, 1 Nmber, 1 special character
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return passwordRegex.test(password);
 }
 
 /**
- * This function is used by user to change login details
+ * This function is used to validate all login details
  * @param {*} event - form submission event
- * @description
- * The password change mechanism has the following steps:
- * 1. Checks if entered password is same as stored password
- * 2. Checks that the new password is different from the old password
- * 3. Checks that the new password is same as confirmation password
- * 4. Checks that the password fields are not empty
  */
 async function validateInputs(email, username, oldPassword, newPassword, confirmPassword) {
     // Email validation
@@ -101,18 +95,23 @@ async function updateUserReferences(userId, userProperty) {
         const userTickets = await getTicketsByUserId(userId);
         const userBookings = await getBookingsByUserId(userId);
 
-        const updatePromises = [
-            ...userTickets.map(ticket => 
-                updateTicket(ticket.ticketId, updates)
-                    .catch(err => console.error(`Failed to update ticket ${ticket.ticketId}:`, err))
-            ),
-            ...userBookings.map(booking => 
-                updateBooking(booking.bookingId, updates)
-                    .catch(err => console.error(`Failed to update booking ${booking.bookingId}:`, err))
-            )
-        ];
+        // Update tickets
+        for (const ticket of userTickets) {
+            try {
+                await updateTicket(ticket.ticketId, updates);
+            } catch (err) {
+                console.error(`Failed to update ticket ${ticket.ticketId}:`, err);
+            }
+        }
 
-        await Promise.all(updatePromises);
+        // Update bookings
+        for (const booking of userBookings) {
+            try {
+                await updateBooking(booking.bookingId, updates);
+            } catch (err) {
+                console.error(`Failed to update booking ${booking.bookingId}:`, err);
+            }
+        }
     } catch (error) {
         console.error("Error updating user references:", error);
         throw error;
@@ -123,7 +122,8 @@ async function updateUserReferences(userId, userProperty) {
  * change the details for user
  * @param {*} event 
  * @description
- * Uses the validInput function validate fields
+ * Uses the validInput function validate all fields
+ * Then updates the tickets and bookings for the user (change user property in them)
  */
 async function changeUserDetails(event) {
     try {
@@ -131,12 +131,14 @@ async function changeUserDetails(event) {
         const form = event.target;
         const formData = new FormData(form);
         
+        // 1. gets the form data
         const email = formData.get("emailInput").trim();
         const username = formData.get("usernameInput").trim();
         const oldPassword = formData.get("oldPasswordInput");
         const newPassword = formData.get("newPasswordInput");
         const confirmPassword = formData.get("confirmPasswordInput");
 
+        // 2. Gets user
         const userId = getUserId();
         const user = await getUserByUserId(userId);
 
@@ -146,6 +148,7 @@ async function changeUserDetails(event) {
         // Prepare updates object
         const updates = { email, username };
         
+        // Checks old password
         if (oldPassword) {
             if (hashPassword(oldPassword) !== user.password) {
                 throw new Error("Incorrect current password");
@@ -156,14 +159,14 @@ async function changeUserDetails(event) {
             updates.password = hashPassword(newPassword);
         }
 
-        // Update user in a transaction if possible
+        // Update user
         const updatedUserDetails = await updateUser(userId, updates);
         
         if (!updatedUserDetails) {
             throw new Error("Failed to update user details");
         }
 
-        // Update references
+        // Update bookings and tickets
         await updateUserReferences(userId, updatedUserDetails);
 
         alert("Details changed successfully!");

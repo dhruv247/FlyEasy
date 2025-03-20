@@ -118,7 +118,9 @@ const updateFlight = async (flightId, updates) => {
         const request = store.get(flightId);
         request.onsuccess = () => {
             const flight = request.result;
-            if (!flight) return reject("Flight not found");
+            if (!flight) {
+                return reject("Flight not found");
+            }
             Object.assign(flight, updates, { updatedAt: new Date().toISOString().split("T")[0] });
             const updateRequest = store.put(flight);
             updateRequest.onsuccess = () => resolve(flight);
@@ -132,6 +134,9 @@ const updateFlight = async (flightId, updates) => {
  * Deletes a flight using flightid
  * @param {*} flightId 
  * @returns flight (resolve) / error (reject)
+ * @description
+ * This function is now redundant as delete flights options has been removed
+ * Only being kept for adding this feature in next iteration
  */
 const deleteFlight = async (flightId) => {
     const db = await openDB();

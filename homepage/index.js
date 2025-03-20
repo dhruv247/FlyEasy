@@ -14,6 +14,7 @@ function saveSearchData(event) {
             event.preventDefault();
             // Add date validation check
             if (!validateDates()) {
+                // exit the saveSearchData function
                 return;
             }
             const form = event.target;
@@ -102,6 +103,7 @@ function swapLocations() {
 
 /**
  * changes login button to dashboard when user is logged in
+ * Different Dashboard for customers and admins
  */
 function loginDashboardButtonSwap() {
     const loggedInStatus = getLoginStatus();
@@ -126,8 +128,11 @@ function loginDashboardButtonSwap() {
 function validateDates() {
     const departureDate = new Date(document.getElementById("departureDate").value);
     const returnDate = new Date(document.getElementById("returnDate").value);
+
+    // Create a current date
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day for fair comparison
+    // Reset time to start of day for fair comparison
+    today.setHours(0, 0, 0, 0);
 
     if (departureDate < today) {
         alert("Departure date must be in the future");
@@ -144,7 +149,6 @@ function validateDates() {
             return false;
         }
     }
-
     return true;
 }
 

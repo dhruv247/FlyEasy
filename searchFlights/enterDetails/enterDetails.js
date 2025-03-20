@@ -3,6 +3,7 @@ const noOfTraveller = getNoOfTraveller();
 
 /**
  * Dynamically creates flyer detail input forms based on number of travellers
+ * used a different method to add to dom (instead of appendChild)
  */
 function createFlyerForms() {
     const container = document.getElementById('flyerFormsContainer');
@@ -55,11 +56,14 @@ function createFlyerForms() {
  *  a. Get's data stored from local storage
  *  b. Get's user data from indexedDB
  *  c. Get's flight data from indexedDB
- * 2. update's a flight's booked seats count and seat prices
- * 3. Calculate ticket prices using the updated flights (seat count and current prices)
- * 4. Create tickets (using no of travellers)
- * 5. combine tickets to create a booking
- * 6. redirects to the current user's booking dashboard
+ * 2. Get currentFlightPrices (before updating bookedseatcount and currentPrices)
+ *  - This is a mistake (not an error)
+ *  - The reason for storing the current Flight prices is so that correct prices are displayed in tickets and bookings
+ * 3. update's a flight's booked seats count and seat prices
+ * 4. Calculate ticket prices using the updated flights (seat count and current prices)
+ * 5. Create tickets (using no of travellers)
+ * 6. combine tickets to create a booking
+ * 7. redirects to the current user's booking dashboard
  */
 async function createBooking(event) {
     try {
@@ -71,10 +75,12 @@ async function createBooking(event) {
             const email = document.getElementById(`emailInput${i}`).value;
             const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+            // Age Validation
             if (age < 1 || age > 120 || !Number.isInteger(age)) {
                 throw new Error(`Invalid age for Flyer ${i}. Age must be between 1 and 120 years.`);
             }
 
+            // Email Validation
             if (!emailRegex.test(email)) {
                 throw new Error(`Invalid email format for Flyer ${i}.`);
             }
@@ -101,7 +107,21 @@ async function createBooking(event) {
             returnFlight = await getFlightsByFlightId(returnFlightId);
         }
 
-        // 2. Update flight seat counts and prices first
+        // 2. Initialise variables to store currentFlightPrices
+        let oldDepartureFlightEconomyCurrentPrice;
+        let oldDepartureFlightBusinessCurrentPrice;
+        let oldReturnFlightEconomyCurrentPrice;
+        let oldReturnFlightBusinessCurrentPrice;
+
+
+        /**
+         * 3. Update flight seat counts and prices first
+         * @description
+         * 1. check if the trip is one way or round trip
+         * 2. Then consider whether the travell class for a flight is business or economy
+         * 3. Based on that update the seat booked count and current prices
+         * 
+         */
         if (tripType === "oneWay") {
             const seatUpdates = {};
             if (seatType === "1") {
@@ -112,6 +132,8 @@ async function createBooking(event) {
                     Number(departureFlight.economyBasePrice)
                 );
                 departureFlight.economyBookedCount = newEconomyCount;
+                // Store currentFlightPrices before updating the flight objects
+                oldDepartureFlightEconomyCurrentPrice = departureFlight.economyCurrentPrice;
                 departureFlight.economyCurrentPrice = seatUpdates.economyCurrentPrice;
             } else {
                 const newBusinessCount = Number(departureFlight.businessBookedCount) + Number(noOfTraveller);
@@ -121,6 +143,8 @@ async function createBooking(event) {
                     Number(departureFlight.businessBasePrice)
                 );
                 departureFlight.businessBookedCount = newBusinessCount;
+                // Store currentFlightPrices before updating the flight objects
+                oldDepartureFlightBusinessCurrentPrice = departureFlight.businessCurrentPrice;
                 departureFlight.businessCurrentPrice = seatUpdates.businessCurrentPrice;
             }
             await updateFlight(departureFlightId, seatUpdates);
@@ -142,8 +166,12 @@ async function createBooking(event) {
                 );
 
                 departureFlight.economyBookedCount = departureUpdates.economyBookedCount;
+                // Store currentFlightPrices before updating the flight objects
+                oldDepartureFlightEconomyCurrentPrice = departureFlight.economyCurrentPrice;
                 departureFlight.economyCurrentPrice = departureUpdates.economyCurrentPrice;
                 returnFlight.economyBookedCount = returnUpdates.economyBookedCount;
+                // Store currentFlightPrices before updating the flight objects
+                oldReturnFlightEconomyCurrentPrice = returnFlight.economyCurrentPrice;
                 returnFlight.economyCurrentPrice = returnUpdates.economyCurrentPrice;
             } else {
                 departureUpdates.businessBookedCount = Number(departureFlight.businessBookedCount) + Number(noOfTraveller);
@@ -159,8 +187,12 @@ async function createBooking(event) {
                 );
 
                 departureFlight.businessBookedCount = departureUpdates.businessBookedCount;
+                // Store currentFlightPrices before updating the flight objects
+                oldDepartureFlightBusinessCurrentPrice = departureFlight.businessCurrentPrice;
                 departureFlight.businessCurrentPrice = departureUpdates.businessCurrentPrice;
                 returnFlight.businessBookedCount = returnUpdates.businessBookedCount;
+                // Store currentFlightPrices before updating the flight objects
+                oldReturnFlightBusinessCurrentPrice = returnFlight.businessCurrentPrice;
                 returnFlight.businessCurrentPrice = returnUpdates.businessCurrentPrice;
             }
 
@@ -168,24 +200,25 @@ async function createBooking(event) {
             await updateFlight(returnFlightId, returnUpdates);
         }
 
-        // 3. Calculate ticket price using updated prices
+        // 4. Calculate ticket price using updated prices
         let ticketPrice;
         if (tripType === "oneWay") {
             ticketPrice = seatType === "1" ? 
-                Number(departureFlight.economyCurrentPrice) : 
-                Number(departureFlight.businessCurrentPrice);
+                Number(oldDepartureFlightEconomyCurrentPrice) : 
+                Number(oldDepartureFlightBusinessCurrentPrice);
         } else {
             const departurePrice = seatType === "1" ? 
-                Number(departureFlight.economyCurrentPrice) : 
-                Number(departureFlight.businessCurrentPrice);
+                Number(oldDepartureFlightEconomyCurrentPrice) : 
+                Number(oldDepartureFlightBusinessCurrentPrice);
             const returnPrice = seatType === "1" ? 
-                Number(returnFlight.economyCurrentPrice) : 
-                Number(returnFlight.businessCurrentPrice);
+                Number(oldReturnFlightEconomyCurrentPrice) : 
+                Number(oldReturnFlightBusinessCurrentPrice);
             ticketPrice = departurePrice + returnPrice;
         }
 
-        // 4. Create tickets with updated flight data
+        // 5. Create tickets with updated flight data
         let tickets = [];
+        // Variable to combine ticket prices to get booking price
         let totalBookingPrice = 0;
 
         for (let i = 1; i <= noOfTraveller; i++) {
@@ -218,7 +251,7 @@ async function createBooking(event) {
             totalBookingPrice += ticketPrice;
         }
 
-        // 5. Create booking with updated flight data
+        // 6. Create booking with updated flight data
         const booking = await addBookingToDB(
             user,
             departureFlight,
@@ -230,6 +263,8 @@ async function createBooking(event) {
         );
 
         clearCurrentFlightDetails();
+
+        // 7. Redirect to user's dashboard's bookings page
         window.location.href = '/dashboards/user/bookings/bookings.html'
 
     } catch (error) {
@@ -241,5 +276,5 @@ async function createBooking(event) {
 /**
  * Event listeners
  */
-document.addEventListener("DOMContentLoaded", protectCustomerPage);
-document.addEventListener("DOMContentLoaded", createFlyerForms);
+document.addEventListener("DOMContentLoaded", protectCustomerPage); // Route protection
+document.addEventListener("DOMContentLoaded", createFlyerForms); // Loads the form on the page when it is loaded

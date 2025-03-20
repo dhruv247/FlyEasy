@@ -9,8 +9,6 @@ let travelClass;
 
 /**
  * dynamically add event listeners to flight cards
- * @description
- * 1. Add edit button event listeners
  */
 function attachEventListeners() {
     const editButtons = document.querySelectorAll(".editFlightBtn");
@@ -36,10 +34,27 @@ function attachEventListeners() {
  * @param {*} flights - list of flights
  */
 function flightDOMStructure(flights) {
+
     const flightSection = document.getElementById("sampleFlights");
     flightSection.innerHTML = "";
     
     for (const flight of flights) {
+
+        /**
+         * Custom Time format
+         * @description
+         * 1. This is because duration like 2:03 are being printed as 2:3 which is confusing.
+        */
+        const duration = flight.duration;
+        const durationArray = duration.split(":")
+        let customDuration;
+        if (durationArray[1] < 10) {
+            customDuration = `${durationArray[0]}:0${durationArray[1]}`
+        } else {
+            customDuration = duration
+        }
+
+        // For displaying flight times changed underneath flight number
         const changed = flight.changed;
         const editResult = changed === "No Changes" ? '' : "Flight Times Changed";
         
@@ -69,7 +84,7 @@ function flightDOMStructure(flights) {
                         </div>
                     </div>
                     <div class="col-12 col-md-1">
-                        <p>${flight.duration}</p>
+                        <p>${customDuration}</p>
                     </div>
                     <div class="col-12 col-md-1">
                         <p>${flight.planeName}</p>
@@ -109,7 +124,7 @@ async function loadFlightsFromDB() {
 }
 
 /**
- * gets flight details from search from
+ * gets flight details from search form
  * @param {*} event - form submission event
  * @description
  * 1. Uses filter to return flights which contain even partial matches

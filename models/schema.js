@@ -26,8 +26,8 @@ flights = [{
     businessBookedCount: 0, // Changed Dynamically (Type - Number)
     economyBasePrice: 5000, // Entered Manually (Type - Number)
     businessBasePrice: 15000, // Entered Manually (Type - Number)
-    economyCurrentPrice: 5050, // Change Dynamically using (((seatsBooked/100)*basePrice)+basePrice)
-    businessCurrentPrice: 17000, // Change Dynamically using (((seatsBooked/100)*basePrice)+basePrice)
+    economyCurrentPrice: 5050, // Change Dynamically using (((economySeatsBooked/economyCapacity)*basePrice)+basePrice)
+    businessCurrentPrice: 17000, // Change Dynamically using (((businessSeatsBooked/businessCapacity)*basePrice)+basePrice)
     createdAt: "xyz", // Automatic
     updatedAt: "xyz", // Automatic
     changed: "No Changes" // No changes, Flight Times Changed

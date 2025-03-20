@@ -199,10 +199,26 @@ function attachEventListeners() {
  * @param {} flights - list of flights
  */
 function flightDOMStructure(flights) {
+    
     const flightSection = document.getElementById("sampleFlights");
     flightSection.innerHTML = "";
     const searchData = getFlightSearchData();
     for (const flight of flights) {
+
+        /**
+         * Custom Time format
+         * @description
+         * 1. This is because duration like 2:03 are being printed as 2:3 which is confusing.
+        */
+        const duration = flight.duration;
+        const durationArray = duration.split(":")
+        let customDuration;
+        if (durationArray[1] < 10) {
+            customDuration = `${durationArray[0]}:0${durationArray[1]}`
+        } else {
+            customDuration = duration
+        }
+
         const currentTicketPrice = searchData.travelClass === "1" ? flight.economyCurrentPrice * Number(searchData.noOfTraveller) : flight.businessCurrentPrice * Number(searchData.noOfTraveller);
         const newFlight = document.createElement("div");
         newFlight.className = "row border border-subtle rounded m-0 mb-3 py-2 align-items-center";
@@ -230,7 +246,7 @@ function flightDOMStructure(flights) {
                         </div>
                     </div>
                     <div class="col-12 col-md-2">
-                        <p>${flight.duration}</p>
+                        <p>${customDuration}</p>
                     </div>
                     <div class="col-12 col-md-2">
                         <p>₹ <span>${currentTicketPrice}</span></p>
