@@ -99,12 +99,40 @@ function validateDates(departureDate, returnDate) {
  * Searches Flights based on input fields
  * @param {*} event - form submission
  * @description
- * 1. Saves fields to local storage
- * 2. Gets form fields
- * 3. Starts searching for flights stored indexedDB and keeps only flights with matches
+ * 1. Validates city inputs
+ * 2. Saves fields to local storage
+ * 3. Gets form fields
+ * 4. Starts searching for flights stored indexedDB and keeps only flights with matches
  */
 async function searchFlights(event) {
     event.preventDefault();
+    
+    // Get city values for validation
+    const fromCity = document.getElementById("flightFrom").value;
+    const toCity = document.getElementById("flightTo").value;
+    
+    // Validate cities are from the list
+    if (!CITIES.includes(fromCity) || !CITIES.includes(toCity)) {
+        const flightSection = document.getElementById("sampleFlights");
+        flightSection.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                Please select valid cities from the dropdown list
+            </div>
+        `;
+        return;
+    }
+    
+    // Validate cities are not the same
+    if (fromCity === toCity) {
+        const flightSection = document.getElementById("sampleFlights");
+        flightSection.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                Departure and arrival cities cannot be the same
+            </div>
+        `;
+        return;
+    }
+    
     saveSearchData(event);
     
     // Reset sort buttons to unselected state
@@ -350,12 +378,26 @@ function sortFlights() {
 }
 
 /**
+ * Populates the datalist with cities from the centralized CITIES array
+ */
+function populateCityList() {
+    const datalist = document.getElementById('cityList');
+    CITIES.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        datalist.appendChild(option);
+    });
+}
+
+/**
  * Event Triggers
  */
 document.addEventListener("DOMContentLoaded", protectCustomerPage); // Only loads page is user type is customer
 document.addEventListener("DOMContentLoaded", () => {
     // Load search form with saved values
     loadSearchDetails();
+    // Populate city list
+    populateCityList();
     // Automatically trigger form submission
     document.getElementById("flightSearchForm").requestSubmit();
 });

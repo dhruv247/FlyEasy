@@ -1,4 +1,4 @@
-// ===== User Authentication & Profile Functions =====
+// ----------- User Authentication & Profile Functions --------
 /**
  * Gets login status
  * @returns {boolean} True if user is logged in, false otherwise
@@ -33,7 +33,7 @@ function setUserLoginData(user) {
     localStorage.setItem("userType", user.userType);
 }
 
-// ===== Flight Search Parameters =====
+// -------- Flight Search Parameters ----------
 /**
  * gets travel class
  * @returns travel class as 1 or 2
@@ -113,7 +113,7 @@ function getTripType() {
     return localStorage.getItem("tripType");
 }
 
-// ===== Flight Selection Management =====
+// ------- Flight Selection Management ---------
 /**
  * stores the departure flight id in local storage
  * @param {*} flightId 
@@ -146,7 +146,7 @@ function getReturnFlightId() {
     return localStorage.getItem("returnFlightId");
 }
 
-// ===== Booking Management =====
+// ------ Booking Management ------
 /**
  * gets the bookingId from local storage
  * @returns bookingId
@@ -155,7 +155,7 @@ function getBookingId() {
     return localStorage.getItem("bookingId")
 }
 
-// ===== Storage Cleanup Functions =====
+// ---------- Storage Cleanup Functions ---------------
 function clearCurrentFlightDetails() {
     localStorage.removeItem("departureDate");
     localStorage.removeItem("departureFlightId");

@@ -3,20 +3,37 @@
  * @param {Event} event - Form submission event
  * @description
  * This function:
- * 1. Checks if user is logged in
- * 2. Stores trip type, flight details, travel preferences in localStorage
- * 3. Redirects to searchFlights page
+ * 1. Validates departure and arrival city details
+ * 2. Checks if user is logged in
+ * 3. Stores trip type, flight details, travel preferences in localStorage
+ * 4. Redirects to searchFlights page
  * @throws {Error} If user is not logged in, throws error
  */
 function saveSearchData(event) {
     try {
         if (getLoginStatus()) {
             event.preventDefault();
-            // Add date validation check
-            if (!validateDates()) {
-                // exit the saveSearchData function
+            
+            // Add city validation check
+            const fromCity = document.getElementById("flightFrom").value;
+            const toCity = document.getElementById("flightTo").value;
+            
+            if (!CITIES.includes(fromCity) || !CITIES.includes(toCity)) {
+                alert("Please select valid cities from the dropdown list");
                 return;
             }
+            
+            // Add same city validation
+            if (fromCity === toCity) {
+                alert("Departure and arrival cities cannot be the same");
+                return;
+            }
+            
+            // Add date validation check
+            if (!validateDates()) {
+                return;
+            }
+            
             const form = event.target;
             const formData = new FormData(form);
             saveFlightSearchData(formData);
@@ -131,7 +148,7 @@ function validateDates() {
 
     // Create a current date
     const today = new Date();
-    // Reset time to start of day for fair comparison
+    // Reset time to start of day for simplicity
     today.setHours(0, 0, 0, 0);
 
     if (departureDate < today) {
@@ -153,7 +170,22 @@ function validateDates() {
 }
 
 /**
+ * Populates the datalist with cities from the centralized CITIES array
+ */
+function populateCityList() {
+    const datalist = document.getElementById('cityList');
+    CITIES.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        datalist.appendChild(option);
+    });
+}
+
+/**
  * Event Triggers
  */
-document.addEventListener("DOMContentLoaded", loadSearchDetails); // Load Search Details
-document.addEventListener("DOMContentLoaded", loginDashboardButtonSwap); // Which button (login/dashboard) to show when page is loaded
+document.addEventListener("DOMContentLoaded", () => {
+    loadSearchDetails();
+    loginDashboardButtonSwap();
+    populateCityList();
+});

@@ -158,6 +158,29 @@ async function addFlight(event) {
 }
 
 /**
- * route protection
+ * Populates the departure and arrival place select elements with cities
  */
-document.addEventListener("DOMContentLoaded", adminDashboardCheck);
+function populateCitySelects() {
+    const departureSelect = document.getElementById('departurePlace');
+    const arrivalSelect = document.getElementById('arrivalPlace');
+    
+    CITIES.forEach(city => {
+        const departureOption = document.createElement('option');
+        departureOption.value = city;
+        departureOption.textContent = city;
+        departureSelect.appendChild(departureOption);
+        
+        const arrivalOption = document.createElement('option');
+        arrivalOption.value = city;
+        arrivalOption.textContent = city;
+        arrivalSelect.appendChild(arrivalOption);
+    });
+}
+
+/**
+ * Event Triggers
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    adminDashboardCheck();
+    populateCitySelects();
+});

@@ -136,6 +136,13 @@ async function searchFlights(event) {
     const formData = new FormData(form);
     const flightFrom = formData.get("flightFrom").toLowerCase();
     const flightTo = formData.get("flightTo").toLowerCase();
+
+    // Add validation to check if cities are the same
+    if (flightFrom && flightTo && flightFrom === flightTo) {
+        alert("Departure and arrival cities cannot be the same!");
+        return;
+    }
+
     const departureDate = formData.get("departureDate");
     const flightNo = formData.get("flightNo").toLowerCase();
     const remainingCapacity = Number(formData.get("remainingCapacity"));
@@ -169,7 +176,10 @@ async function searchFlights(event) {
         }
         return matchesSearch;
     });
-    document.getElementById("sortType").classList.remove("d-none"); 
+    document.getElementById("sortType").classList.remove("d-none");
+    if (searchedFlights.length === 0) {
+        alert("There are no matches");
+    }
     flightDOMStructure(searchedFlights);
     document.getElementById("sortPrice").checked = false;
     document.getElementById("sortDuration").checked = false;
@@ -225,7 +235,20 @@ function toggleLocations() {
 }
 
 /**
+ * Populates the datalist with cities from the centralized CITIES array
+ */
+function populateCityList() {
+    const datalist = document.getElementById('cityList');
+    CITIES.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        datalist.appendChild(option);
+    });
+}
+
+/**
  * Event listeners
  */
 document.addEventListener("DOMContentLoaded", adminDashboardCheck); // Route protection
 document.addEventListener("DOMContentLoaded", loadFlightsFromDB); // loads flights from DB on page load
+document.addEventListener("DOMContentLoaded", populateCityList); // populate city dropdown
