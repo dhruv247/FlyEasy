@@ -1,11 +1,10 @@
 # FlyEasy
 
-## A front-end flight booking website built using html, css (bootstrap), and vanilla js. DB - localStorage + IndexedDB
+## A front-end flight booking website built using:<br>Frontend: HTML, CSS (Bootstrap), and VanillaJS.<br>Storage: localStorage, IndexedDB
 
-## Features
-- User Functionality
-- Admin Functionality
-- Book tickets, create bookings etc 
+## Features<br>
+- User Functionality: sign up, Login, search flights, books tickets, view bookings, edit user details, edit booking details
+- Admin Functionality: sign up, login, add/edit/view flights
 
 ## Installation
 1. Clone the repository:
